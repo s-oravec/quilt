@@ -1,0 +1,2 @@
+CREATE OR REPLACE TYPE quilt_report_type IS TABLE OF VARCHAR2(4000)
+/

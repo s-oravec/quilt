@@ -15,3 +15,28 @@ It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#A
 ## Out of scope
 
   * LCOV > HTML (should be able to use already existing tools)
+
+## Installation
+
+  * Dependency - install tables for DBMS_PROFILER in schema
+
+  1. Connect to target schema
+  2. @install
+
+## Note
+
+  SQL scripts are in directory Application/SQL_scripts
+
+## Example
+
+  Directory test show example use Quilt appication (Oracle 12c)
+
+  1. connect to databese - SQLPLUS (test directory)
+  2. @install.sql
+  3. @run.sql 
+    * set spying objects - exec quilt_codecoverage_pkg.set_SpyingObject('&schem','&obj_name','&obj_type') 
+    * start profiling - @coverage_start "Test name"
+    * run test - @test
+    * stop profiling - @coverage_stop
+    * export source from database - @coverage_export_all_src
+    * create and export report - @coverage_export_report
