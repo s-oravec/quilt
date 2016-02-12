@@ -18,7 +18,7 @@ CREATE OR REPLACE PACKAGE quilt_util_pkg IS
   -- Public function and procedure declarations
 
   /** compile object - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
-  PROCEDURE set_Level(p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL, p_level IN NUMBER DEFAULT 1);
+  PROCEDURE set_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL, p_level IN NUMBER DEFAULT 1);
 
   /** compile all objects for spying list - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
   PROCEDURE set_LevelAll(p_level IN NUMBER DEFAULT 1);

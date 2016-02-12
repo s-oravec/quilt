@@ -9,7 +9,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   DML_AL                CONSTANT VARCHAR2(10) := 'ALTER';
   PL_LEVEL1             CONSTANT VARCHAR2(50) := 'PLSQL_OPTIMIZE_LEVEL=1';
   PL_LEVEL2             CONSTANT VARCHAR2(50) := 'PLSQL_OPTIMIZE_LEVEL=2';
-  SPACE                 CONSTANT VARCHAR2(10) := ' ';
+  SPACE                 CONSTANT VARCHAR2(1) := ' ';
+  DOT                   CONSTANT VARCHAR2(1) := '.';
+  LEVEL1                CONSTANT NUMBER := 1;
+  LEVEL2                CONSTANT NUMBER := 2;
   --
   PKG_HEADER_TYPE       CONSTANT VARCHAR2(30) := 'PACKAGE';
   PKG_BODY_TYPE         CONSTANT VARCHAR2(30) := 'PACKAGE BODY';
@@ -19,12 +22,66 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
 
 
   -- Function and procedure implementations
+  /** check optimalizace level */
+  FUNCTION check_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2, p_level IN NUMBER)
+      RETURN BOOLEAN IS
 
--- check
--- select * from user_plsql_object_settings t where t.name = upper('&n');
+      lint_res     NUMBER;
+  BEGIN
+      SELECT count(*)
+        INTO lint_res
+        FROM all_plsql_object_settings t /*user_plsql_object_settings*/
+       WHERE t.owner = p_sch_name
+         AND t.name = p_obj_name
+         AND t.type = p_obj_type
+         AND t.plsql_optimize_level = p_level;
+      
+      RETURN TRUE;
+  EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+          RETURN FALSE;
+  END check_Level;
+
+  /** check exists object */
+  FUNCTION check_ExistObject(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2)
+      RETURN BOOLEAN IS
+
+      lint_res     NUMBER;
+  BEGIN
+      SELECT count(*)
+        INTO lint_res
+        FROM all_objects t
+       WHERE t.owner = p_sch_name
+         AND t.object_name = p_obj_name
+         AND t.object_type = p_obj_type;
+      
+      RETURN TRUE;
+  EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+          RETURN FALSE;
+  END check_ExistObject;
+
+  /** get optimalizace level for object */
+  FUNCTION get_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2)
+      RETURN NUMBER IS
+
+      lint_res     NUMBER;
+  BEGIN
+      SELECT plsql_optimize_level
+        INTO lint_res
+        FROM all_plsql_object_settings t /*user_plsql_object_settings*/
+       WHERE t.owner = p_sch_name
+         AND t.name = p_obj_name
+         AND t.type = p_obj_type;
+      
+      RETURN lint_res;
+  EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+          RETURN lint_res;
+  END get_Level;
 
   /** compile object - set PLSQL_OPTIMALIZE_LEVEL = 1 */
-  PROCEDURE set_Level1(p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2) IS
+  PROCEDURE set_Level1(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2) IS
 
       ltxt_type    VARCHAR2(400) := CASE WHEN upper(p_obj_type) IN (PKG_HEADER_TYPE, PKG_BODY_TYPE) THEN PKG_HEADER_TYPE ELSE upper(p_obj_type) END;
       ltxt_comp    VARCHAR2(400) := CASE WHEN upper(p_obj_type) = PKG_BODY_TYPE THEN 'COMPILE BODY' ELSE 'COMPILE' END;
@@ -32,14 +89,14 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level1');
 
-      ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL1;
+      ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL1;
       -- todo debug
       --dbms_output.put_line(ltxt_sql);
       EXECUTE IMMEDIATE ltxt_sql;
   END set_Level1;
 
   /** compile object - set PLSQL_OPTIMALIZE_LEVEL = 2 */
-  PROCEDURE set_Level2(p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2) IS
+  PROCEDURE set_Level2(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2) IS
 
       ltxt_type    VARCHAR2(400) := CASE WHEN upper(p_obj_type) IN (PKG_HEADER_TYPE, PKG_BODY_TYPE) THEN PKG_HEADER_TYPE ELSE upper(p_obj_type) END;
       ltxt_comp    VARCHAR2(400) := CASE WHEN upper(p_obj_type) = PKG_BODY_TYPE THEN 'COMPILE BODY' ELSE 'COMPILE' END;
@@ -47,31 +104,31 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level2');
 
-      ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL2;
+      ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL2;
       -- todo debug
       --dbms_output.put_line(ltxt_sql);      --
       EXECUTE IMMEDIATE ltxt_sql;
   END set_Level2;
 
   /** compile object - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
-  PROCEDURE set_Level(p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL, p_level IN NUMBER DEFAULT 1) IS
+  PROCEDURE set_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL, p_level IN NUMBER DEFAULT 1) IS
       
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level');
 
       IF p_obj_type IN (PKG_HEADER_TYPE, PKG_BODY_TYPE) THEN
-          IF p_level = 1 THEN
-              set_Level1(p_obj_name,p_obj_type);
-          ELSIF p_level = 2 THEN
-              set_Level2(p_obj_name,p_obj_type);
+          IF p_level = LEVEL1 THEN
+              set_Level1(p_sch_name, p_obj_name,p_obj_type);
+          ELSIF p_level = LEVEL2 THEN
+              set_Level2(p_sch_name, p_obj_name,p_obj_type);
           END IF;
       ELSIF p_obj_type IS NULL THEN
-          IF p_level = 1 THEN
-              set_Level1(p_obj_name,PKG_HEADER_TYPE);
-              set_Level1(p_obj_name,PKG_BODY_TYPE);
-          ELSIF p_level = 2 THEN
-              set_Level2(p_obj_name,PKG_HEADER_TYPE);
-              set_Level2(p_obj_name,PKG_BODY_TYPE);
+          IF p_level = LEVEL1 THEN
+              set_Level1(p_sch_name, p_obj_name,PKG_HEADER_TYPE);
+              set_Level1(p_sch_name, p_obj_name,PKG_BODY_TYPE);
+          ELSIF p_level = LEVEL2 THEN
+              set_Level2(p_sch_name, p_obj_name,PKG_HEADER_TYPE);
+              set_Level2(p_sch_name, p_obj_name,PKG_BODY_TYPE);
           END IF;
       END IF;
       
@@ -82,25 +139,36 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
 
       lint_sessionid NUMBER := quilt_core_pkg.get_SESSIONID;
       lint_sid       NUMBER := quilt_core_pkg.get_SID;
+      ltxt_log       VARCHAR2(1000);
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_LevelAll');
 
       BEGIN
-          FOR i IN (SELECT --t.object_schema,
+          FOR i IN (SELECT t.object_schema,
                            t.object_name,
                            t.object_type
                       FROM quilt_methods t
                      WHERE t.sessionid = lint_sessionid
                        AND t.sid = lint_sid)
           LOOP
-              set_Level(p_obj_name => i.object_name,
-                        p_obj_type => i.object_type,
-                        p_level    => p_level);
+              IF check_ExistObject(i.object_schema,i.object_name,i.object_type) AND
+                  NOT check_Level(i.object_schema,i.object_name,i.object_type,p_level) THEN
+
+                  set_Level(p_sch_name => i.object_schema,
+                            p_obj_name => i.object_name,
+                            p_obj_type => i.object_type,
+                            p_level    => p_level);
+              ELSE
+                  -- log
+                  ltxt_log := 'object_schema:'||i.object_schema||' object_name:'||i.object_name||' object_type:'||i.object_type||' p_level:'||p_level||' level:'||get_Level(i.object_schema,i.object_name,i.object_type);
+                  quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_LevelAll !:'||ltxt_log);
+              END IF;
           END LOOP;       
       EXCEPTION
           WHEN OTHERS THEN
               NULL;
               -- todo spravne osetreni
+              quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_LevelAll !:!'||substr(sqlerrm,1,2000));
       END;      
   END set_LevelAll;
 
