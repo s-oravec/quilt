@@ -90,8 +90,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level1');
 
       ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL1;
-      -- todo debug
-      --dbms_output.put_line(ltxt_sql);
+      -- log
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level1: '||ltxt_sql);
+      --
       EXECUTE IMMEDIATE ltxt_sql;
   END set_Level1;
 
@@ -105,8 +106,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level2');
 
       ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL2;
-      -- todo debug
-      --dbms_output.put_line(ltxt_sql);      --
+      -- log
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level2: '||ltxt_sql);
+      --
       EXECUTE IMMEDIATE ltxt_sql;
   END set_Level2;
 
