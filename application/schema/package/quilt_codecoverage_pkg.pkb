@@ -102,7 +102,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.save_ObjectReport');
 
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.save_ObjectReport : idx '|| lint_idx);
-
+      -- TN
+      insert_Row(p_sessionid,p_sid,p_runid,lint_idx,quilt_const_pkg.TAG_TN || p_object.tag_tn);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.save_ObjectReport : TN '|| p_object.tag_tn);
       -- SF
       insert_Row(p_sessionid,p_sid,p_runid,lint_idx,quilt_const_pkg.TAG_SF ||p_object.tag_sf);
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.save_ObjectReport : SF '|| p_object.tag_sf);
@@ -228,7 +230,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       lrec_total   rcu_total%ROWTYPE;
       lrec_exec    rcu_exec%ROWTYPE;
       --
-      lint_idx       NUMBER := 1;
+      --lint_idx       NUMBER := 1;
       lbol_first_run BOOLEAN := FALSE;
       --
       lint_sessionid    NUMBER := nvl(p_sessionid,quilt_core_pkg.get_SESSIONID);
@@ -236,6 +238,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       lint_runid        NUMBER := nvl(p_runid,quilt_core_pkg.get_Runid);
       lstr_testname     VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName,quilt_const_pkg.TEST_NAME_DEFAULT);
       lobj_report       quilt_report_process := quilt_report_process(2,quilt_const_pkg.TAG_EOR);
+      lstr_name         VARCHAR2(4000);
+      --
+      lint_branch_cnt   NUMBER;
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage');
 
@@ -270,7 +275,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
               ELSE
                   quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: prvni beh');
                   lbol_first_run := TRUE;
-                  insert_Row(lint_sessionid,lint_sid,lint_runid,lint_idx,quilt_const_pkg.TAG_TN || lstr_testname);
+
               END IF;
               --
               lobj_report.tag_da := quilt_report_type();
@@ -279,6 +284,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
               lobj_report.tag_brda := quilt_report_type();
               lobj_report.tag_fnf := 0;
               lobj_report.tag_brf := 0;
+              -- TN
+              lobj_report.tag_tn := lstr_testname;
               -- SF
               lobj_report.tag_sf := './'|| lrec_report.owner ||'.'|| lrec_report.name ||'.'|| lrec_report.type ||'.sql';
               quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: '||  lint_runid ||','|| lrec_report.runid ||','|| lrec_report.name ||','|| lrec_report.owner ||','|| lrec_report.type);
@@ -293,14 +300,23 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
               lobj_report.tag_lh := lrec_exec.cnt;
               -- LF
               lobj_report.tag_lf := lrec_total.cnt;
-              
+              -- BR
+              lint_branch_cnt := 0;
           END IF;
           -- analyza radku, todo
           IF (lower(lrec_report.text) LIKE '%procedure %' OR lower(lrec_report.text) LIKE '%function %' ) AND
               ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
               -- FN:<line number of function start>,<function name>
+              BEGIN
+                  lstr_name := quilt_util_pkg.getName(lrec_report.text);
+              
+              EXCEPTION
+                  WHEN OTHERS THEN
+                      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: FN: '|| SQLERRM);
+                      lstr_name := lrec_report.text;
+              END;
               lobj_report.tag_fn.extend;
-              lobj_report.tag_fn(lobj_report.tag_fn.last) := lrec_report.line ||','|| lrec_report.text; -- todo
+              lobj_report.tag_fn(lobj_report.tag_fn.last) := lrec_report.line ||','|| lstr_name;
               -- FNDA:<execution count>,<function name>
               
               -- FNF:<number of functions found>
@@ -312,8 +328,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
               ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
               -- BRDA:<line number>,<block number>,<branch number>,<taken>
               lobj_report.tag_brda.extend;
-              lobj_report.tag_brda(lobj_report.tag_brda.last) := lrec_report.line ||','|| lrec_report.text; -- todo
-
+              -- todo ,1 -> counts blocks
+              lobj_report.tag_brda(lobj_report.tag_brda.last) := lrec_report.line ||',1,'|| lint_branch_cnt ||','|| lint_branch_cnt;
+              lint_branch_cnt := lint_branch_cnt + 1;
               -- BRF:<number of branches found>
               lobj_report.tag_brf := nvl(lobj_report.tag_brf,0) + 1;
               -- BRH:<number of branches hit>

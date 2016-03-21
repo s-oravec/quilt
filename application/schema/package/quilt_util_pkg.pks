@@ -23,5 +23,7 @@ CREATE OR REPLACE PACKAGE quilt_util_pkg IS
   /** compile all objects for spying list - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
   PROCEDURE set_LevelAll(p_level IN NUMBER DEFAULT 1);
   
+  /** get name method */
+  FUNCTION getName(p_textline IN VARCHAR2) RETURN VARCHAR2;
 END quilt_util_pkg;
 /
