@@ -184,30 +184,32 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
                              p_object IN VARCHAR2,
                              p_object_type IN VARCHAR2 DEFAULT NULL) IS
 
-      lstr_schema      quilt_methods.object_schema%TYPE := upper(p_schema);
-      lstr_object      quilt_methods.object_name%TYPE := upper(p_object);
-      lstr_object_type quilt_methods.object_type%TYPE := upper(p_object_type);
       lint_sessionid   quilt_methods.sessionid%TYPE := quilt_core_pkg.get_SESSIONID;
       lint_sid         quilt_methods.sid%TYPE := quilt_core_pkg.get_SID;
+      ltab_objs        quilt_util_pkg.object_list_type;
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject');
 
+      ltab_objs := quilt_util_pkg.getObjectList(p_schema,p_object,p_object_type);
+      FOR i IN (SELECT *
+                  FROM TABLE(ltab_objs)) LOOP
       BEGIN
           INSERT INTO quilt_methods
               (sessionid, sid, object_schema, object_name, object_type, insert_dt)
               VALUES
-                  (lint_sessionid, lint_sid, lstr_schema, lstr_object, lstr_object_type, sysdate);
+                  (lint_sessionid, lint_sid, i.schema_name, i.object_name, i.object_type, sysdate);
       EXCEPTION
           WHEN OTHERS THEN -- todo specificka
               UPDATE quilt_methods
                  SET last_dt = sysdate
                WHERE sessionid = lint_sessionid
                  AND sid = lint_sid
-                 AND object_schema = lstr_schema
-                 AND object_name = lstr_object
-                 AND nvl(object_type,'-1') = nvl(lstr_object_type,'-1');
+                 AND object_schema = i.schema_name
+                 AND object_name = i.object_name
+                 AND nvl(object_type,'-1') = nvl(i.object_type,'-1');
 
       END;
+      END LOOP;
       --
       COMMIT;
   END set_SpyingObject;

@@ -113,7 +113,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   END set_Level2;
 
   /** compile object - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
-  PROCEDURE set_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL, p_level IN NUMBER DEFAULT 1) IS
+  PROCEDURE set_Level(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2, p_level IN NUMBER) IS
       
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_Level');
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   END set_Level;
 
   /** compile all objects for spying list - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
-  PROCEDURE set_LevelAll(p_level IN NUMBER DEFAULT 1) IS
+  PROCEDURE set_LevelAll(p_level IN NUMBER) IS
 
       lint_sessionid NUMBER := quilt_core_pkg.get_SESSIONID;
       lint_sid       NUMBER := quilt_core_pkg.get_SID;
@@ -174,7 +174,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
       END;      
   END set_LevelAll;
 
-  /** get name method */
+  /** get name of method */
   FUNCTION getName(p_textline IN VARCHAR2) RETURN VARCHAR2 IS
     C_FUNCT          CONSTANT VARCHAR2(10) := 'FUNCTION';
     C_PROCE          CONSTANT VARCHAR2(10) := 'PROCEDURE';
@@ -235,6 +235,36 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
     
     RETURN trim(lstr_result);
   END getName;
+
+  /** get list of objects */
+  FUNCTION getObjectList(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL)
+      RETURN quilt_util_pkg.object_list_type IS
+
+      ltxt_schema  all_objects.owner%TYPE := upper(p_sch_name);
+      ltxt_objname all_objects.object_name%TYPE := upper(p_obj_name);
+      ltxt_objtype all_objects.object_type%TYPE := upper(p_obj_type);
+      ltab_objs    quilt_util_pkg.object_list_type;
+      lrec_obj     quilt_util_pkg.object_type;
+      lint_idx     PLS_INTEGER := 1;
+  BEGIN
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.getObjectList');
+      --
+      FOR i IN (SELECT owner, object_name, object_type
+                  FROM all_objects
+                 WHERE owner LIKE '%'|| ltxt_schema ||'%'
+                   AND object_name LIKE '%'|| ltxt_objname ||'%'
+                   AND object_type LIKE '%'|| ltxt_objtype ||'%'
+                   AND object_type IN (SELECT /*+ RESULT_CACHE */ distinct type
+                                         FROM all_source))
+      LOOP
+          lrec_obj.schema_name := i.owner;
+          lrec_obj.object_name := i.object_name;
+          lrec_obj.object_type := i.object_type;
+          ltab_objs(lint_idx) := lrec_obj;
+          lint_idx := lint_idx + 1;
+      END LOOP;
+      RETURN ltab_objs;
+  END getObjectList;
 
 END quilt_util_pkg;
 /
