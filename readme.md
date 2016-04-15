@@ -19,6 +19,7 @@ It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#A
 ## Installation
 
   * Dependency - install tables for DBMS_PROFILER in schema
+  * Support Oracle 10g - 12c  
 
   1. Connect to target schema
   2. @install

@@ -10,5 +10,10 @@ prompt Creating type QUILT_REPORT_TYPE
 prompt Creating type body QUILT_REPORT_PROCESS
 @@quilt_report_process.tpb
 
+prompt Creating type QUILT_OBJECT_TYPE
+@@quilt_object_type.tps
+
+prompt Creating type QUILT_OBJECT_LIST_TYPE
+@@quilt_object_list_type.tps
 
 @&&run_dir_end

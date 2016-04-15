@@ -186,12 +186,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
 
       lint_sessionid   quilt_methods.sessionid%TYPE := quilt_core_pkg.get_SESSIONID;
       lint_sid         quilt_methods.sid%TYPE := quilt_core_pkg.get_SID;
-      ltab_objs        quilt_util_pkg.object_list_type;
+      ltab_objs        quilt_object_list_type := quilt_object_list_type();
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject');
 
       ltab_objs := quilt_util_pkg.getObjectList(p_schema,p_object,p_object_type);
-      FOR i IN (SELECT *
+
+      FOR i IN (SELECT schema_name, object_name, object_type
                   FROM TABLE(ltab_objs)) LOOP
       BEGIN
           INSERT INTO quilt_methods
@@ -207,7 +208,6 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
                  AND object_schema = i.schema_name
                  AND object_name = i.object_name
                  AND nvl(object_type,'-1') = nvl(i.object_type,'-1');
-
       END;
       END LOOP;
       --

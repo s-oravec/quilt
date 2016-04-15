@@ -238,33 +238,53 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
 
   /** get list of objects */
   FUNCTION getObjectList(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL)
-      RETURN quilt_util_pkg.object_list_type IS
+      RETURN quilt_object_list_type  IS
 
       ltxt_schema  all_objects.owner%TYPE := upper(p_sch_name);
       ltxt_objname all_objects.object_name%TYPE := upper(p_obj_name);
       ltxt_objtype all_objects.object_type%TYPE := upper(p_obj_type);
-      ltab_objs    quilt_util_pkg.object_list_type;
-      lrec_obj     quilt_util_pkg.object_type;
-      lint_idx     PLS_INTEGER := 1;
+      ltab_objs    quilt_object_list_type;
+      ltxt_sql     VARCHAR2(4000) := 'SELECT quilt_object_type(owner, object_name, object_type) FROM all_objects ';
+      ltxt_sql_w1  VARCHAR2(100) := q'{ WHERE owner = :schema  }';
+      ltxt_sql_w11 VARCHAR2(100) := q'{ WHERE owner LIKE '%'|| :schema ||'%' }';
+      ltxt_sql_w2  VARCHAR2(100) := q'{ AND object_name = :objname }';
+      ltxt_sql_w21 VARCHAR2(100) := q'{ AND object_name LIKE '%'|| :objname ||'%' }';
+      ltxt_sql_w3  VARCHAR2(100) := q'{ AND object_type = :objtype }';
+      ltxt_sql_w31 VARCHAR2(100) := q'{ AND object_type LIKE '%'|| :objtype ||'%' }';
+      ltxt_sql_w4  VARCHAR2(100) := ' AND object_type IN (SELECT /*+ RESULT_CACHE */ DISTINCT type FROM all_source)';
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.getObjectList');
       --
-      FOR i IN (SELECT owner, object_name, object_type
-                  FROM all_objects
-                 WHERE owner LIKE '%'|| ltxt_schema ||'%'
-                   AND object_name LIKE '%'|| ltxt_objname ||'%'
-                   AND object_type LIKE '%'|| ltxt_objtype ||'%'
-                   AND object_type IN (SELECT /*+ RESULT_CACHE */ distinct type
-                                         FROM all_source))
-      LOOP
-          lrec_obj.schema_name := i.owner;
-          lrec_obj.object_name := i.object_name;
-          lrec_obj.object_type := i.object_type;
-          ltab_objs(lint_idx) := lrec_obj;
-          lint_idx := lint_idx + 1;
-      END LOOP;
+      IF NOT checkString(ltxt_schema) THEN
+          ltxt_sql := ltxt_sql || ltxt_sql_w1;
+      ELSE
+          ltxt_sql := ltxt_sql || ltxt_sql_w11;
+      END IF;
+      IF NOT checkString(ltxt_objname) THEN
+          ltxt_sql := ltxt_sql || ltxt_sql_w2;
+      ELSE
+          ltxt_sql := ltxt_sql || ltxt_sql_w21;
+      END IF;
+      IF NOT checkString(ltxt_objtype) THEN
+          ltxt_sql := ltxt_sql || ltxt_sql_w3;
+      ELSE
+          ltxt_sql := ltxt_sql || ltxt_sql_w31;
+      END IF;
+      ltxt_sql := ltxt_sql || ltxt_sql_w4;
+      EXECUTE IMMEDIATE ltxt_sql
+          BULK COLLECT INTO ltab_objs
+          USING ltxt_schema, ltxt_objname, ltxt_objtype;
+
       RETURN ltab_objs;
   END getObjectList;
+
+  /** check % in string */
+  FUNCTION checkString(p_string IN VARCHAR2)
+      RETURN BOOLEAN IS
+      
+  BEGIN
+      RETURN instr(p_string,'%') > 0;
+  END checkString;
 
 END quilt_util_pkg;
 /
