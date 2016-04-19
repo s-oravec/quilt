@@ -29,8 +29,8 @@ CREATE OR REPLACE PACKAGE quilt_util_pkg IS
   FUNCTION getObjectList(p_sch_name IN VARCHAR2, p_obj_name IN VARCHAR2, p_obj_type IN VARCHAR2 DEFAULT NULL)
       RETURN quilt_object_list_type;
 
-  /** check % in string */
-  FUNCTION checkString(p_string IN VARCHAR2)
+  /** check char in string */
+  FUNCTION checkString(p_string IN VARCHAR2, p_char IN VARCHAR2 DEFAULT '%')
       RETURN BOOLEAN;
 
 END quilt_util_pkg;

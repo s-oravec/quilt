@@ -11,6 +11,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   PL_LEVEL2             CONSTANT VARCHAR2(50) := 'PLSQL_OPTIMIZE_LEVEL=2';
   SPACE                 CONSTANT VARCHAR2(1) := ' ';
   DOT                   CONSTANT VARCHAR2(1) := '.';
+  BRACKET               CONSTANT VARCHAR2(1) := '(';
+  SEMICOLON             CONSTANT VARCHAR2(1) := ';';
   LEVEL1                CONSTANT NUMBER := 1;
   LEVEL2                CONSTANT NUMBER := 2;
   --
@@ -178,8 +180,6 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
   FUNCTION getName(p_textline IN VARCHAR2) RETURN VARCHAR2 IS
     C_FUNCT          CONSTANT VARCHAR2(10) := 'FUNCTION';
     C_PROCE          CONSTANT VARCHAR2(10) := 'PROCEDURE';
-    C_SPACE          CONSTANT VARCHAR2(1) := ' ';
-    C_BRACKET        CONSTANT VARCHAR2(1) := '(';
     C_FUNCT_LEN      CONSTANT NUMBER := length(C_FUNCT);
     C_PROCE_LEN      CONSTANT NUMBER := length(C_PROCE);
   
@@ -187,6 +187,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
     lint_start       NUMBER;
     lint_end_s       NUMBER;
     lint_end_b       NUMBER;
+    lint_end_c       NUMBER;
     lint_end3        NUMBER;
   BEGIN
     -- najdi funkci
@@ -198,36 +199,56 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
             RETURN NULL;
         END IF;
         -- je procedura
-        lint_end_s := instr(upper(p_textline),C_SPACE,lint_start+C_PROCE_LEN+1);
-        lint_end_b := instr(upper(p_textline),C_BRACKET,lint_start+C_PROCE_LEN+1);
-  
-        IF lint_end_s <> 0 AND lint_end_b <> 0 THEN
+        lint_end_s := instr(upper(p_textline),SPACE,lint_start+C_PROCE_LEN+1);
+        lint_end_b := instr(upper(p_textline),BRACKET,lint_start+C_PROCE_LEN+1);
+        lint_end_c := instr(upper(p_textline),SEMICOLON,lint_start+C_PROCE_LEN+1);
+
+        IF lint_end_s <> 0 AND lint_end_b <> 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_s,lint_end_b,lint_end_c)-(lint_start+C_PROCE_LEN);
+        ELSIF lint_end_s = 0 AND lint_end_b <> 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_b,lint_end_c)-(lint_start+C_PROCE_LEN);
+        ELSIF lint_end_s <> 0 AND lint_end_b = 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_s,lint_end_c)-(lint_start+C_PROCE_LEN);
+        ELSIF lint_end_s <> 0 AND lint_end_b <> 0 AND lint_end_c = 0 THEN
             lint_end3 := least(lint_end_s,lint_end_b)-(lint_start+C_PROCE_LEN);
-        ELSIF lint_end_s = 0 AND lint_end_b <> 0 THEN
+        ELSIF lint_end_s = 0 AND lint_end_b = 0 AND lint_end_c <> 0 THEN
+            lint_end3 := lint_end_c-(lint_start+C_PROCE_LEN);
+        ELSIF lint_end_s = 0 AND lint_end_b <> 0 AND lint_end_c = 0 THEN
             lint_end3 := lint_end_b-(lint_start+C_PROCE_LEN);
-        ELSIF lint_end_b = 0 AND lint_end_s <> 0 THEN
+        ELSIF lint_end_s <> 0 AND lint_end_b = 0 AND lint_end_c = 0 THEN
             lint_end3 := lint_end_s-(lint_start+C_PROCE_LEN);
         ELSE
             lint_end3 := length(p_textline)-(lint_start+C_PROCE_LEN);
         END IF;
-        lstr_result := trim(replace(replace(trim(substr(p_textline,lint_start+C_PROCE_LEN+1,lint_end3)),'(',''),' ',''));
+        -- lint_end3 >30: chybka
+        lstr_result := trim(replace(replace(replace(trim(substr(p_textline,lint_start+C_PROCE_LEN+1,lint_end3)),'(',''),' ',''),';',''));
         IF ascii(substr(lstr_result,length(lstr_result))) = 10 THEN
             lstr_result := substr(lstr_result,1,length(lstr_result)-1);
         END IF;
     ELSE
         -- je funkce
-        lint_end_s := instr(upper(p_textline),C_SPACE,lint_start+C_FUNCT_LEN+1);
-        lint_end_b := instr(upper(p_textline),C_BRACKET,lint_start+C_FUNCT_LEN+1);
-        IF lint_end_s <> 0 and lint_end_b <> 0 THEN
+        lint_end_s := instr(upper(p_textline),SPACE,lint_start+C_FUNCT_LEN+1);
+        lint_end_b := instr(upper(p_textline),BRACKET,lint_start+C_FUNCT_LEN+1);
+        lint_end_c := instr(upper(p_textline),SEMICOLON,lint_start+C_FUNCT_LEN+1);
+
+        IF lint_end_s <> 0 AND lint_end_b <> 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_s,lint_end_b,lint_end_c)-(lint_start+C_FUNCT_LEN);
+        ELSIF lint_end_s = 0 AND lint_end_b <> 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_b,lint_end_c)-(lint_start+C_FUNCT_LEN);
+        ELSIF lint_end_s <> 0 AND lint_end_b = 0 AND lint_end_c <> 0 THEN
+            lint_end3 := least(lint_end_s,lint_end_c)-(lint_start+C_FUNCT_LEN);
+        ELSIF lint_end_s <> 0 AND lint_end_b <> 0 AND lint_end_c = 0 THEN
             lint_end3 := least(lint_end_s,lint_end_b)-(lint_start+C_FUNCT_LEN);
-        ELSIF lint_end_s = 0 and lint_end_b <> 0 THEN
+        ELSIF lint_end_s = 0 AND lint_end_b = 0 AND lint_end_c <> 0 THEN
+            lint_end3 := lint_end_c-(lint_start+C_FUNCT_LEN);
+        ELSIF lint_end_s = 0 AND lint_end_b <> 0 AND lint_end_c = 0 THEN
             lint_end3 := lint_end_b-(lint_start+C_FUNCT_LEN);
-        ELSIF lint_end_b = 0 and lint_end_s <> 0 THEN
+        ELSIF lint_end_s <> 0 AND lint_end_b = 0 AND lint_end_c = 0 THEN
             lint_end3 := lint_end_s-(lint_start+C_FUNCT_LEN);
         ELSE
             lint_end3 := length(p_textline)-(lint_start+C_FUNCT_LEN);
         END IF;
-        lstr_result := trim(replace(replace(trim(substr(p_textline,lint_start+C_FUNCT_LEN+1,lint_end3)),'(',''),' ',''));
+        lstr_result := trim(replace(replace(replace(trim(substr(p_textline,lint_start+C_FUNCT_LEN+1,lint_end3)),'(',''),' ',''),';',''));
         IF ascii(substr(lstr_result,length(lstr_result))) = 10 THEN
             lstr_result := substr(lstr_result,1,length(lstr_result)-1);
         END IF;
@@ -278,12 +299,12 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
       RETURN ltab_objs;
   END getObjectList;
 
-  /** check % in string */
-  FUNCTION checkString(p_string IN VARCHAR2)
+  /** check char in string */
+  FUNCTION checkString(p_string IN VARCHAR2, p_char IN VARCHAR2)
       RETURN BOOLEAN IS
       
   BEGIN
-      RETURN instr(p_string,'%') > 0;
+      RETURN instr(p_string,p_char) > 0;
   END checkString;
 
 END quilt_util_pkg;
