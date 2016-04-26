@@ -9,9 +9,11 @@ define SURFIX = '.sql'
 define DOT = '.'
 define FILE_NAME = '&1&DOT&2&DOT&3&SURFIX'
 
+--debug
 --select '&FILE_NAME' x from dual; 
 
 -- spool src
+prompt Export source code
 spool '&FILE_NAME' 
 --SET SPACE 0
 SET LINESIZE 4000

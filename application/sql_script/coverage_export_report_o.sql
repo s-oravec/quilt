@@ -3,11 +3,15 @@ SET ECHO OFF
 
 -- gen report
 prompt Prepare data for lcov report
+prompt Enter Session ID, SID and RUN ID from table QUILT_RUN
+accept s1 number prompt 'Session ID:'
+accept s2 number prompt 'SID:'
+accept s3 number prompt 'RUN ID:'
 define file_name = lcov.log
 spool &&file_name
 SET ECHO ON
 BEGIN
-  quilt_codecoverage_pkg.ProcessingCodeCoverage;
+  quilt_codecoverage_pkg.ProcessingCodeCoverage(&s1,&s2,&s3);
 END;
 /
 spool off
@@ -30,9 +34,9 @@ SET TERM OFF
 SET EMB ON
 SELECT replace(line,chr(10))
 FROM quilt_report
-WHERE sessionid = quilt_core_pkg.get_SESSIONID 
-AND sid = quilt_core_pkg.get_SID
-AND runid = quilt_core_pkg.get_Runid
+WHERE sessionid = &s1
+AND sid = &s2
+AND runid = &s3
 ORDER BY idx; 
 
 spool off

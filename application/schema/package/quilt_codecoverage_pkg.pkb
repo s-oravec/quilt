@@ -163,18 +163,25 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
   END save_ObjectReport;
 
   /** get list of spying objects */
-  FUNCTION get_SpyingObjects
+  FUNCTION get_SpyingObjects(p_sessionid IN NUMBER DEFAULT NULL,
+                             p_sid       IN NUMBER DEFAULT NULL)
       RETURN SYS_REFCURSOR IS
 
+      lint_sessionid    NUMBER := nvl(p_sessionid,quilt_core_pkg.get_SESSIONID);
+      lint_sid          NUMBER := nvl(p_sid,quilt_core_pkg.get_SID);
       lrcu_result  SYS_REFCURSOR;
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.get_SpyingObjects');
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.get_SpyingObjects:p_sessionid '||p_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.get_SpyingObjects:p_sid '||p_sid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.get_SpyingObjects:lint_sessionid '||lint_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.get_SpyingObjects:lint_sid '||lint_sid);
       --
       OPEN lrcu_result FOR
           SELECT object_schema, object_name, object_type
             FROM quilt_methods
-           WHERE sid = quilt_core_pkg.get_SID
-             AND sessionid = quilt_core_pkg.get_SESSIONID;
+           WHERE sid = lint_sid
+             AND sessionid = lint_sessionid;
       
       RETURN lrcu_result;
   END get_SpyingObjects;
@@ -182,13 +189,19 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
   /** set spying objects for session */
   PROCEDURE set_SpyingObject(p_schema IN VARCHAR2,
                              p_object IN VARCHAR2,
-                             p_object_type IN VARCHAR2 DEFAULT NULL) IS
+                             p_object_type IN VARCHAR2 DEFAULT NULL,
+                             p_sessionid   IN NUMBER DEFAULT NULL,
+                             p_sid         IN NUMBER DEFAULT NULL) IS
 
-      lint_sessionid   quilt_methods.sessionid%TYPE := quilt_core_pkg.get_SESSIONID;
-      lint_sid         quilt_methods.sid%TYPE := quilt_core_pkg.get_SID;
+      lint_sessionid   quilt_methods.sessionid%TYPE := nvl(p_sessionid,quilt_core_pkg.get_SESSIONID);
+      lint_sid         quilt_methods.sid%TYPE := nvl(p_sid,quilt_core_pkg.get_SID);
       ltab_objs        quilt_object_list_type := quilt_object_list_type();
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject');
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject:p_sessionid '||p_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject:p_sid '||p_sid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject:lint_sessionid '||lint_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.set_SpyingObject:lint_sid '||lint_sid);
 
       ltab_objs := quilt_util_pkg.getObjectList(p_schema,p_object,p_object_type);
 
@@ -215,11 +228,21 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
   END set_SpyingObject;
 
   /** delete list of spying objects for session */
-  PROCEDURE del_SpyingObjectList IS
+  PROCEDURE del_SpyingObjectList(p_sessionid IN NUMBER DEFAULT NULL,
+                                 p_sid       IN NUMBER DEFAULT NULL) IS
+
+      lint_sessionid    NUMBER := nvl(p_sessionid,quilt_core_pkg.get_SESSIONID);
+      lint_sid          NUMBER := nvl(p_sid,quilt_core_pkg.get_SID);
   BEGIN
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.del_SpyingObjectList');
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.del_SpyingObjectList:p_sessionid '||p_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.del_SpyingObjectList:p_sid '||p_sid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.del_SpyingObjectList:lint_sessionid '||lint_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.del_SpyingObjectList:lint_sid '||lint_sid);
+
       DELETE quilt_methods
-       WHERE sid = quilt_core_pkg.get_SID
-         AND sessionid = quilt_core_pkg.get_SESSIONID;
+       WHERE sid = lint_sid
+         AND sessionid = lint_sessionid;
       COMMIT;
   END del_SpyingObjectList;
 
@@ -246,6 +269,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
   BEGIN
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage');
 
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:p_sessionid '||p_sessionid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:p_sid '||p_sid);
+      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:p_runid '||p_runid);
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:lint_sessionid '||lint_sessionid);
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:lint_sid '||lint_sid);
       quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage:lint_runid '||lint_runid);
@@ -347,13 +373,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       END LOOP;
       IF lobj_report.tag_da IS NOT NULL THEN
           quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: '|| lobj_report.tag_da.count);
+
+          -- zapis
+          quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: zapis');
+          save_ObjectReport(lint_sessionid,lint_sid,lint_runid,lobj_report);
       ELSE
           quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: lobj_report.tag_da is null!!!');
       END IF;
-      
-      -- zapis
-      quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: zapis');
-      save_ObjectReport(lint_sessionid,lint_sid,lint_runid,lobj_report);
 
       --
       CLOSE rcu_report;

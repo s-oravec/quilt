@@ -2,9 +2,12 @@ SET TERM ON
 SET ECHO OFF
 
 -- create tmp sql file
-define file_name = _src_export.sql
+define file_name = __src_export.sql
 
 prompt Prepare SQL script for export source codes
+prompt Enter Session ID, SID from table QUILT_METHODS
+accept s1 number prompt 'Session ID:'
+accept s2 number prompt 'SID:'
 spool &&file_name
 SET SPACE 0
 SET LINESIZE 80
@@ -18,8 +21,8 @@ SET TERM OFF
 
 select distinct '@@coverage_export_src '|| object_schema ||' '|| object_name ||' "'|| object_type ||'"'
 from quilt_methods
-where sid = quilt_core_pkg.get_SID
-and sessionid = quilt_core_pkg.get_SESSIONID;
+where sid = &s2
+and sessionid = &s1;
 
 --
 spool off
@@ -27,4 +30,4 @@ spool off
 
 -- execute export src
 prompt Export source codes to files
-@@_src_export.sql
+@@__src_export.sql

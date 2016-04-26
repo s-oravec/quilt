@@ -1,9 +1,8 @@
 SET ECHO OFF
 SET TERM OFF
 
---exec dbms_profiler.stop_profiler
-
+prompt Stop profile
 exec quilt_pkg.spying_end
 
--- NESMI BYT exit
+-- Don't exit from sqlplus!!!
 
