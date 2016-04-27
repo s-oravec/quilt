@@ -2,13 +2,13 @@
 
 
 prompt Creating type QUILT_REPORT_PROCESS_TYPE
-@@quilt_report_process.tps
+@@quilt_report_process_type.tps
 
 prompt Creating type QUILT_REPORT_TYPE
 @@quilt_report_type.tps
 
-prompt Creating type body QUILT_REPORT_PROCESS
-@@quilt_report_process.tpb
+prompt Creating type body QUILT_REPORT_PROCESS_TYPE
+@@quilt_report_process_type.tpb
 
 prompt Creating type QUILT_OBJECT_TYPE
 @@quilt_object_type.tps
