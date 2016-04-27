@@ -11,8 +11,8 @@ BEGIN
                  AND object_type = 'TYPE'
                ORDER BY object_id DESC) LOOP
     BEGIN
-        --EXECUTE IMMEDIATE i.sql_comm;
-        dbms_output.put_line(i.sql_comm);
+        EXECUTE IMMEDIATE i.sql_comm;
+        --dbms_output.put_line(i.sql_comm);
         dbms_output.put_line('Drop type :'|| i.object_name ||' in schema :'|| i.owner);
     EXCEPTION
         WHEN OTHERS THEN
