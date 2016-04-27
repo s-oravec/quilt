@@ -1,11 +1,11 @@
 @&&run_dir_begin
 
 
-prompt Creating type QUILT_REPORT_PROCESS_TYPE
-@@quilt_report_process_type.tps
-
 prompt Creating type QUILT_REPORT_TYPE
 @@quilt_report_type.tps
+
+prompt Creating type QUILT_REPORT_PROCESS_TYPE
+@@quilt_report_process_type.tps
 
 prompt Creating type body QUILT_REPORT_PROCESS_TYPE
 @@quilt_report_process_type.tpb
