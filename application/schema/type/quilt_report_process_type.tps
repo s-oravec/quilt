@@ -1,4 +1,4 @@
-CREATE OR REPLACE TYPE quilt_report_process AS OBJECT (
+CREATE OR REPLACE TYPE quilt_report_process_type AS OBJECT (
     idx      NUMBER,
     tag_tn   VARCHAR2(4000),
     tag_sf   VARCHAR2(4000),
@@ -14,8 +14,8 @@ CREATE OR REPLACE TYPE quilt_report_process AS OBJECT (
     tag_lf   NUMBER,
     tag_eor  VARCHAR2(15),
     --
-    CONSTRUCTOR FUNCTION quilt_report_process RETURN SELF AS RESULT,
+    CONSTRUCTOR FUNCTION quilt_report_process_type RETURN SELF AS RESULT,
     --
-    CONSTRUCTOR FUNCTION quilt_report_process(idx NUMBER, eor VARCHAR2) RETURN SELF AS RESULT
+    CONSTRUCTOR FUNCTION quilt_report_process_type(idx NUMBER, eor VARCHAR2) RETURN SELF AS RESULT
 )
 /

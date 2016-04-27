@@ -95,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
   PROCEDURE save_ObjectReport(p_sessionid IN NUMBER,
                               p_sid       IN NUMBER,
                               p_runid     IN NUMBER,
-                              p_object    IN OUT quilt_report_process) IS
+                              p_object    IN OUT quilt_report_process_type) IS
 
       lint_idx     NUMBER := p_object.idx;
   BEGIN
@@ -262,7 +262,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       lint_sid          NUMBER := nvl(p_sid,quilt_core_pkg.get_SID);
       lint_runid        NUMBER := nvl(p_runid,quilt_core_pkg.get_Runid);
       lstr_testname     VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName,quilt_const_pkg.TEST_NAME_DEFAULT);
-      lobj_report       quilt_report_process := quilt_report_process(2,quilt_const_pkg.TAG_EOR);
+      lobj_report       quilt_report_process_type := quilt_report_process_type(2,quilt_const_pkg.TAG_EOR);
       lstr_name         VARCHAR2(4000);
       --
       lint_branch_cnt   NUMBER;
@@ -298,7 +298,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
                   save_ObjectReport(lint_sessionid,lint_sid,lint_runid,lobj_report);
                   --
                   quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: idx_1e '|| lobj_report.idx);
-                  lobj_report := quilt_report_process(lobj_report.idx,quilt_const_pkg.TAG_EOR);
+                  lobj_report := quilt_report_process_type(lobj_report.idx,quilt_const_pkg.TAG_EOR);
                   quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: idx_2 '|| lobj_report.idx);
               ELSE
                   quilt_log_pkg.log_detail($$PLSQL_UNIT ||'.ProcessingCodeCoverage: prvni beh');

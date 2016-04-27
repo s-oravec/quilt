@@ -1,7 +1,7 @@
 @&&run_dir_begin
 
 
-prompt Creating type QUILT_REPORT_PROCESS
+prompt Creating type QUILT_REPORT_PROCESS_TYPE
 @@quilt_report_process.tps
 
 prompt Creating type QUILT_REPORT_TYPE
