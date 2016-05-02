@@ -2,22 +2,24 @@ SET TERM ON
 SET ECHO OFF
 
 -- gen report
-prompt Prepare data for lcov report
-define file_name = lcov.log
-spool &&file_name
-SET ECHO ON
+PROMPT Prepare data for lcov report
+SET TERM OFF
+DEFINE file_name = lcov.log
+SPOOL &&file_name
 BEGIN
   quilt_codecoverage_pkg.ProcessingCodeCoverage;
 END;
 /
-spool off
+SPOOL OFF
 
 -- file name lcov.info
-define file_name = lcov.info
+DEFINE file_name = lcov.info
 
 -- export lcov.info
-prompt Export lcov report
-spool &&file_name
+SET TERM ON
+PROMPT Export lcov report
+SET TERM OFF
+SPOOL &&file_name
 --SET SPACE 0
 SET LINESIZE 4000
 SET ECHO OFF
@@ -34,5 +36,4 @@ WHERE sessionid = quilt_core_pkg.get_SESSIONID
 AND sid = quilt_core_pkg.get_SID
 AND runid = quilt_core_pkg.get_Runid
 ORDER BY idx; 
-
-spool off
+SPOOL OFF

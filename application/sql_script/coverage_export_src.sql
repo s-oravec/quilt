@@ -1,21 +1,20 @@
-SET TERM OFF
-SEt ECHO OFF
+SET TERM ON
+SET ECHO OFF
 
---
-define SCHEMA_OBJ = '&1'
-define OBJECT_NAME = '&2'
-define OBJECT_TYPE = '&3'
-define SURFIX = '.sql'
-define DOT = '.'
-define FILE_NAME = '&1&DOT&2&DOT&3&SURFIX'
+DEFINE SCHEMA_OBJ = '&1'
+DEFINE OBJECT_NAME = '&2'
+DEFINE OBJECT_TYPE = '&3'
+DEFINE SURFIX = '.sql'
+DEFINE DOT = '.'
+DEFINE FILE_NAME = '&1&DOT&2&DOT&3&SURFIX'
 
 --debug
 --select '&FILE_NAME' x from dual; 
 
 -- spool src
-prompt Export source code
-spool '&FILE_NAME' 
---SET SPACE 0
+PROMPT Export DB source code
+SET TERM OFF
+SPOOL '&FILE_NAME' 
 SET LINESIZE 4000
 SET ECHO OFF
 SET FEEDBACK OFF
@@ -25,11 +24,11 @@ SET AUTO OFF
 SET TRIMSPOOL ON
 SET TERM OFF
 SET EMB ON
-select case when line = 1 then 'CREATE OR REPLACE '||text else text end text_line
-from all_source
-where owner = '&SCHEMA_OBJ'
-and name = '&OBJECT_NAME'
-and type = '&OBJECT_TYPE'
-order by line;
-spool off
+SELECT CASE WHEN line = 1 THEN 'CREATE OR REPLACE '||text ELSE text END text_line
+FROM all_source
+WHERE owner = '&SCHEMA_OBJ'
+AND name = '&OBJECT_NAME'
+AND type = '&OBJECT_TYPE'
+ORDER BY line;
+SPOOL OFF
 

@@ -1,8 +1,9 @@
 SET ECHO OFF
-SET TERM OFF
+SET TERM ON
 
-prompt Stop profile
-exec quilt_pkg.spying_end
+PROMPT Stop profile
+SET TERM OFF
+EXEC quilt_pkg.spying_end
 
 -- Don't exit from sqlplus!!!
 
