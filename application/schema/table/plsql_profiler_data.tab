@@ -1,0 +1,23 @@
+create table PLSQL_PROFILER_DATA
+(
+  runid       NUMBER not null,
+  unit_number NUMBER not null,
+  line#       NUMBER not null,
+  total_occur NUMBER,
+  total_time  NUMBER,
+  min_time    NUMBER,
+  max_time    NUMBER,
+  spare1      NUMBER,
+  spare2      NUMBER,
+  spare3      NUMBER,
+  spare4      NUMBER
+)
+;
+comment on table PLSQL_PROFILER_DATA
+  is 'Accumulated data from all profiler runs';
+alter table PLSQL_PROFILER_DATA
+  add primary key (RUNID, UNIT_NUMBER, LINE#);
+alter table PLSQL_PROFILER_DATA
+  add foreign key (RUNID, UNIT_NUMBER)
+  references PLSQL_PROFILER_UNITS (RUNID, UNIT_NUMBER);
+

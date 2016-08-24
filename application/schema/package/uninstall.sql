@@ -1,22 +1,22 @@
 @&&run_dir_begin
 
 
-prompt Dropping package QUILT_CONST_PKG
+prompt .. Dropping package QUILT_CONST_PKG
 DROP PACKAGE quilt_const_pkg;
 
-prompt Dropping package QUILT_UTIL_PKG
+prompt .. Dropping package QUILT_UTIL_PKG
 DROP PACKAGE quilt_util_pkg;
 
-prompt Dropping package QUILT_LOG_PKG
+prompt .. Dropping package QUILT_LOG_PKG
 DROP PACKAGE quilt_log_pkg;
 
-prompt Dropping package QUILT_CORE_PKG
+prompt .. Dropping package QUILT_CORE_PKG
 DROP PACKAGE quilt_core_pkg;
 
-prompt Dropping package QUILT_PKG
+prompt .. Dropping package QUILT_PKG
 DROP PACKAGE quilt_pkg;
 
-prompt Dropping package QUILT_CODECOVERAGE_PKG
+prompt .. Dropping package QUILT_CODECOVERAGE_PKG
 DROP PACKAGE quilt_codecoverage_pkg;
 
 

@@ -1,0 +1,21 @@
+create table PLSQL_PROFILER_UNITS
+(
+  runid          NUMBER not null,
+  unit_number    NUMBER not null,
+  unit_type      VARCHAR2(32),
+  unit_owner     VARCHAR2(32),
+  unit_name      VARCHAR2(32),
+  unit_timestamp DATE,
+  total_time     NUMBER default 0 not null,
+  spare1         NUMBER,
+  spare2         NUMBER
+)
+;
+comment on table PLSQL_PROFILER_UNITS
+  is 'Information about each library unit in a run';
+alter table PLSQL_PROFILER_UNITS
+  add primary key (RUNID, UNIT_NUMBER);
+alter table PLSQL_PROFILER_UNITS
+  add foreign key (RUNID)
+  references PLSQL_PROFILER_RUNS (RUNID);
+
