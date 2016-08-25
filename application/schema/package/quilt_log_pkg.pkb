@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
         p_runid     IN NUMBER,
         p_test_name IN VARCHAR2
     ) IS
-    
+        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
     
         -- todo log
@@ -27,7 +27,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
     END log_start;
 
     PROCEDURE log_stop(p_runid IN NUMBER) IS
-    
+        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
     
         -- todo osetreni
