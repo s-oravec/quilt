@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_log_pkg IS
+CREATE OR REPLACE PACKAGE quilt_logger IS
 
     -- Author  : HENRY
     -- Created : 18.12.2015 9:27:06
@@ -26,5 +26,5 @@ CREATE OR REPLACE PACKAGE quilt_log_pkg IS
     /** Loging message */
     PROCEDURE log_detail(p_msg IN VARCHAR2);
 
-END quilt_log_pkg;
+END quilt_logger;
 /

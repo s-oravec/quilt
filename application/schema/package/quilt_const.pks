@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_const_pkg IS
+CREATE OR REPLACE PACKAGE quilt_const IS
 
     -- PL/SQL code coverage tool - Constanst
 
@@ -49,5 +49,5 @@ CREATE OR REPLACE PACKAGE quilt_const_pkg IS
     /** EOR tag */
     TAG_EOR CONSTANT VARCHAR2(15) := 'end_of_record';
 
-END quilt_const_pkg;
+END quilt_const;
 /

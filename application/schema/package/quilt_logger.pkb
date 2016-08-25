@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
+CREATE OR REPLACE PACKAGE BODY quilt_logger IS
 
     -- Private type declarations
 
@@ -20,7 +20,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
         INSERT INTO quilt_run
             (sessionid, SID, runid, start_ts, test_name)
         VALUES
-            (quilt_core_pkg.get_SESSIONID, quilt_core_pkg.get_SID, p_runid, systimestamp, p_test_name);
+            (quilt_core.get_SESSIONID, quilt_core.get_SID, p_runid, systimestamp, p_test_name);
     
         COMMIT;
     
@@ -33,17 +33,17 @@ CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
         -- todo osetreni
         UPDATE quilt_run
            SET stop_ts = systimestamp
-         WHERE sessionid = quilt_core_pkg.get_SESSIONID
-           AND SID = quilt_core_pkg.get_SID
+         WHERE sessionid = quilt_core.get_SESSIONID
+           AND SID = quilt_core.get_SID
            AND runid = p_runid;
     
         COMMIT;
     END log_stop;
 
     PROCEDURE log_detail(p_msg IN VARCHAR2) IS
-        lint_sessionid NUMBER := quilt_core_pkg.get_SESSIONID;
-        lint_sid       NUMBER := quilt_core_pkg.get_SID;
-        lint_runid     NUMBER := quilt_core_pkg.get_Runid;
+        lint_sessionid NUMBER := quilt_core.get_SESSIONID;
+        lint_sid       NUMBER := quilt_core.get_SID;
+        lint_runid     NUMBER := quilt_core.get_Runid;
     
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
@@ -51,5 +51,5 @@ CREATE OR REPLACE PACKAGE BODY quilt_log_pkg IS
         COMMIT;
     END log_detail;
 
-END quilt_log_pkg;
+END quilt_logger;
 /

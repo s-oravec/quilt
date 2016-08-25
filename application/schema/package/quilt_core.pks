@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_core_pkg IS
+CREATE OR REPLACE PACKAGE quilt_core IS
 
     -- Author  : HENRY
     -- Created : 17.12.2015 16:45:08
@@ -34,5 +34,5 @@ CREATE OR REPLACE PACKAGE quilt_core_pkg IS
     /** get test name */
     FUNCTION get_TestName RETURN VARCHAR2;
 
-END quilt_core_pkg;
+END quilt_core;
 /

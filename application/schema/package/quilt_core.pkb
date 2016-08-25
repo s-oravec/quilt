@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY quilt_core_pkg IS
+CREATE OR REPLACE PACKAGE BODY quilt_core IS
 
     -- Private type declarations
 
@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_core_pkg IS
     
     BEGIN
         -- ?todo log provolani?
-        gstr_testname := substr(p_testname, 1, quilt_const_pkg.TEST_NAME_MAX_LEN);
+        gstr_testname := substr(p_testname, 1, quilt_const.TEST_NAME_MAX_LEN);
     END set_TestName;
 
     /** get test name */
@@ -73,5 +73,5 @@ BEGIN
     -- Initialization
     init;
 
-END quilt_core_pkg;
+END quilt_core;
 /

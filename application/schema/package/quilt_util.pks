@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_util_pkg IS
+CREATE OR REPLACE PACKAGE quilt_util IS
 
     -- PL/SQL code coverage tool - helper utilities
 
@@ -32,5 +32,5 @@ CREATE OR REPLACE PACKAGE quilt_util_pkg IS
         p_char   IN VARCHAR2 DEFAULT '%'
     ) RETURN BOOLEAN;
 
-END quilt_util_pkg;
+END quilt_util;
 /

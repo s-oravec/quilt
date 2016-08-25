@@ -1,17 +1,17 @@
-@&&run_dir_begin
-
-
+prompt Dropping tables
 @&&run_dir table
-@&&run_dir type
-@&&run_dir sequence
-@&&run_dir package
 
+prompt Dropping types
+@&&run_dir type
+
+prompt Dropping sequences
+@&&run_dir sequence
+
+prompt Dropping packages
+@&&run_dir package
 
 prompt Compiling invalid objects
 begin
   dbms_utility.compile_schema(schema => user, compile_all => FALSE);
 end;
 /
-
-
-@&&run_dir_end

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
+CREATE OR REPLACE PACKAGE BODY quilt_util IS
 
     -- Private type declarations
 
@@ -114,11 +114,11 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
                                    END;
         ltxt_sql  VARCHAR2(4000);
     BEGIN
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_Level1');
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_Level1');
     
         ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL1;
         -- log
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_Level1: ' || ltxt_sql);
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_Level1: ' || ltxt_sql);
         --
         EXECUTE IMMEDIATE ltxt_sql;
     END set_Level1;
@@ -145,11 +145,11 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
                                    END;
         ltxt_sql  VARCHAR2(4000);
     BEGIN
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_Level2');
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_Level2');
     
         ltxt_sql := DML_AL || SPACE || ltxt_type || SPACE || p_sch_name || DOT || p_obj_name || SPACE || ltxt_comp || SPACE || PL_LEVEL2;
         -- log
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_Level2: ' || ltxt_sql);
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_Level2: ' || ltxt_sql);
         --
         EXECUTE IMMEDIATE ltxt_sql;
     END set_Level2;
@@ -164,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
     ) IS
     
     BEGIN
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_Level');
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_Level');
     
         IF p_obj_type IN (PKG_HEADER_TYPE, PKG_BODY_TYPE) THEN
             IF p_level = LEVEL1 THEN
@@ -187,11 +187,11 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
     /** compile all objects for spying list - set PLSQL_OPTIMALIZE_LEVEL = 1/2 */
     PROCEDURE set_LevelAll(p_level IN NUMBER) IS
     
-        lint_sessionid NUMBER := quilt_core_pkg.get_SESSIONID;
-        lint_sid       NUMBER := quilt_core_pkg.get_SID;
+        lint_sessionid NUMBER := quilt_core.get_SESSIONID;
+        lint_sid       NUMBER := quilt_core.get_SID;
         ltxt_log       VARCHAR2(1000);
     BEGIN
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_LevelAll');
+        quilt_logger.log_detail($$PLSQL_UNIT || '.set_LevelAll');
     
         BEGIN
             FOR i IN (SELECT t.object_schema, t.object_name, t.object_type
@@ -206,14 +206,14 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
                     -- log
                     ltxt_log := 'object_schema:' || i.object_schema || ' object_name:' || i.object_name || ' object_type:' || i.object_type ||
                                 ' p_level:' || p_level || ' level:' || get_Level(i.object_schema, i.object_name, i.object_type);
-                    quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_LevelAll !:' || ltxt_log);
+                    quilt_logger.log_detail($$PLSQL_UNIT || '.set_LevelAll !:' || ltxt_log);
                 END IF;
             END LOOP;
         EXCEPTION
             WHEN OTHERS THEN
                 NULL;
                 -- todo spravne osetreni
-                quilt_log_pkg.log_detail($$PLSQL_UNIT || '.set_LevelAll !:!' || substr(SQLERRM, 1, 2000));
+                quilt_logger.log_detail($$PLSQL_UNIT || '.set_LevelAll !:!' || substr(SQLERRM, 1, 2000));
         END;
     END set_LevelAll;
 
@@ -327,7 +327,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
         ltxt_sql_w31 VARCHAR2(100) := q'{ AND object_type LIKE '%'|| :objtype ||'%' }';
         ltxt_sql_w4  VARCHAR2(100) := ' AND object_type IN (SELECT /*+ RESULT_CACHE */ DISTINCT type FROM all_source)';
     BEGIN
-        quilt_log_pkg.log_detail($$PLSQL_UNIT || '.getObjectList');
+        quilt_logger.log_detail($$PLSQL_UNIT || '.getObjectList');
         --
         IF NOT checkString(ltxt_schema) THEN
             ltxt_sql := ltxt_sql || ltxt_sql_w1;
@@ -363,5 +363,5 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_pkg IS
         RETURN instr(p_string, p_char) > 0;
     END checkString;
 
-END quilt_util_pkg;
+END quilt_util;
 /

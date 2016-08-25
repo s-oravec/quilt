@@ -1,36 +1,32 @@
-@&&run_dir_begin
+prompt .. Creating package QUILT_CONST
+@@quilt_const.pks
 
-prompt .. Creating package QUILT_CONST_PKG
-@@quilt_const_pkg.pks
+prompt .. Creating package QUILT_UTIL
+@@quilt_util.pks
 
-prompt .. Creating package QUILT_UTIL_PKG
-@@quilt_util_pkg.pks
+prompt .. Creating package QUILT_LOGGER
+@@quilt_logger.pks
 
-prompt .. Creating package QUILT_LOG_PKG
-@@quilt_log_pkg.pks
-
-prompt .. Creating package QUILT_CORE_PKG
-@@quilt_core_pkg.pks
+prompt .. Creating package QUILT_CORE
+@@quilt_core.pks
 
 prompt .. Creating package QUILT
 @@quilt.pks
 
-prompt .. Creating package QUILT_CODECOVERAGE_PKG
-@@quilt_codecoverage_pkg.pks
+prompt .. Creating package QUILT_CODECOVERAGE
+@@quilt_codecoverage.pks
 
-prompt .. Creating package body QUILT_UTIL_PKG
-@@quilt_util_pkg.pkb
+prompt .. Creating package body QUILT_UTIL
+@@quilt_util.pkb
 
-prompt .. Creating package body QUILT_LOG_PKG
-@@quilt_log_pkg.pkb
+prompt .. Creating package body QUILT_LOGGER
+@@quilt_logger.pkb
 
-prompt .. Creating package body QUILT_CORE_PKG
-@@quilt_core_pkg.pkb
+prompt .. Creating package body QUILT_CORE
+@@quilt_core.pkb
 
 prompt .. Creating package body QUILT
 @@quilt.pkb
 
-prompt .. Creating package body QUILT_CODECOVERAGE_PKG
-@@quilt_codecoverage_pkg.pkb
-
-@&&run_dir_end
+prompt .. Creating package body QUILT_CODECOVERAGE
+@@quilt_codecoverage.pkb

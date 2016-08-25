@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_codecoverage_pkg IS
+CREATE OR REPLACE PACKAGE quilt_codecoverage IS
 
     -- Author  : HENRY
     -- Created : 17.12.2015 16:42:38
@@ -45,5 +45,5 @@ CREATE OR REPLACE PACKAGE quilt_codecoverage_pkg IS
         p_runid     IN NUMBER DEFAULT NULL
     );
 
-END quilt_codecoverage_pkg;
+END quilt_codecoverage;
 /

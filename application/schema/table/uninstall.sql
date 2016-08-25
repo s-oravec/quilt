@@ -1,6 +1,3 @@
-@&&run_dir_begin
-
-
 prompt .. Dropping table QUILT_METHODS
 DROP TABLE quilt_methods CASCADE CONSTRAINTS PURGE;
 
@@ -21,6 +18,3 @@ DROP TABLE plsql_profiler_runs CASCADE CONSTRAINTS PURGE;
 
 prompt .. Dropping table PLSQL_PROFILER_UNITS
 DROP TABLE plsql_profiler_units CASCADE CONSTRAINTS PURGE;
-
-
-@&&run_dir_end
