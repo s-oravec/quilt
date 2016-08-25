@@ -1,15 +1,6 @@
 CREATE OR REPLACE PACKAGE quilt_const_pkg IS
 
-  -- Author  : HENRY
-  -- Created : 17.12.2015 16:53:23
-  -- Purpose : PL/SQL code coverage tool
-  -- Purpose : konstanty 
-
-  
-  -- Public type declarations
-
-  
-  -- Public constant declarations
+  -- PL/SQL code coverage tool - Constanst
 
   /** max length test name */
   TEST_NAME_MAX_LEN CONSTANT NUMBER := 2000;
@@ -57,14 +48,6 @@ CREATE OR REPLACE PACKAGE quilt_const_pkg IS
   --end_of_record
   /** EOR tag */
   TAG_EOR           CONSTANT VARCHAR2(15) := 'end_of_record';
-
-  /** default test name */
-  TEST_NAME_DEFAULT CONSTANT VARCHAR2(50) := 'Code coverage test';
-
-  -- Public variable declarations
-
-
-  -- Public function and procedure declarations
 
 END quilt_const_pkg;
 /

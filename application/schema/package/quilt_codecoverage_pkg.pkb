@@ -261,7 +261,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
       lint_sessionid    NUMBER := nvl(p_sessionid,quilt_core_pkg.get_SESSIONID);
       lint_sid          NUMBER := nvl(p_sid,quilt_core_pkg.get_SID);
       lint_runid        NUMBER := nvl(p_runid,quilt_core_pkg.get_Runid);
-      lstr_testname     VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName,quilt_const_pkg.TEST_NAME_DEFAULT);
+      lstr_testname     VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName,quilt_pkg.DEFAULT_TEST_NAME);
       lobj_report       quilt_report_process_type := quilt_report_process_type(2,quilt_const_pkg.TAG_EOR);
       lstr_name         VARCHAR2(4000);
       --
@@ -423,7 +423,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
          BRDA:<line number>,<block number>,<branch number>,<taken>
 
        Block  number  and  branch  number are gcc internal IDs for the branch.
-       Taken is either ’-’ if the basic block containing the branch was  never
+       Taken is either ï¿½-ï¿½ if the basic block containing the branch was  never
        executed or a number indicating how often that branch was taken.
 
        Branch coverage summaries are stored in two lines:

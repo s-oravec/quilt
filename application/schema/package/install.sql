@@ -1,6 +1,5 @@
 @&&run_dir_begin
 
-
 prompt .. Creating package QUILT_CONST_PKG
 @@quilt_const_pkg.pks
 
@@ -33,6 +32,5 @@ prompt .. Creating package body QUILT_PKG
 
 prompt .. Creating package body QUILT_CODECOVERAGE_PKG
 @@quilt_codecoverage_pkg.pkb
-
 
 @&&run_dir_end

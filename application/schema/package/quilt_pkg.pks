@@ -1,26 +1,17 @@
 CREATE OR REPLACE PACKAGE quilt_pkg IS
 
-  -- Author  : HENRY
-  -- Created : 17.12.2015 15:36:26
-  -- Purpose : PL/SQL code coverage tool
-  -- Purpose : start/stop dbms_profiler
-  
+  -- PL/SQL code coverage tool - start/stop profiling using DBMS_PROFILER
 
-  -- Public type declarations
+  DEFAULT_TEST_NAME constant varchar2(255) := 'Code coverage test';
 
-  
-  -- Public constant declarations
+  -- Starts profilign
+  --
+  -- %param p_test_name tet name
+  --
+  PROCEDURE spying_start(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME);
 
-
-  -- Public variable declarations
-
-
-  -- Public function and procedure declarations
-
-  /** Start profiling */
-  PROCEDURE spying_start(p_test_name IN VARCHAR2 DEFAULT 'Code coverage test');
-
-  /** Stop profiling */
+  -- Stops profiling
+  --
   PROCEDURE spying_end;
 
 END quilt_pkg;
