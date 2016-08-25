@@ -1,2 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
-/oradb_modules
+/lcov.log
+/lcov.info
+/oradb_modules/
+/.idea/
+/**/*.~*
+w
