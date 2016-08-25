@@ -1,9 +1,10 @@
 CREATE TABLE quilt_log
   (
-    sessionid NUMBER ,
-    sid       NUMBER ,
-    runid     NUMBER ,
-    msg       VARCHAR2 (4000) ,
+    sessionid      NUMBER ,
+    sid            NUMBER ,
+    runid          NUMBER ,
+    procedure_name VARCHAR2(255),
+    msg            VARCHAR2 (4000),
     insert_ts TIMESTAMP
   ) ;
 CREATE INDEX quilt_log_IDX1 ON quilt_log

@@ -4,8 +4,8 @@ DROP PACKAGE quilt_const;
 prompt .. Dropping package QUILT_UTIL
 DROP PACKAGE quilt_util;
 
-prompt .. Dropping package QUILT_LOG
-DROP PACKAGE quilt_log;
+prompt .. Dropping package QUILT_LOGGER
+DROP PACKAGE quilt_logger;
 
 prompt .. Dropping package QUILT_CORE
 DROP PACKAGE quilt_core;

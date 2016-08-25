@@ -48,3 +48,6 @@ grant create sequence to &&g_quilt_prod_schema;
 
 prompt .. Granting CREATE VIEW to &&g_quilt_prod_schema
 grant create view to &&g_quilt_prod_schema;
+
+prompt .. Granting CREATE SYNONYM to &&g_quilt_prod_schema
+grant create synonym to &&g_quilt_prod_schema;

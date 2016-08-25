@@ -363,5 +363,38 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         RETURN instr(p_string, p_char) > 0;
     END checkString;
 
+    ----------------------------------------------------------------------------
+    FUNCTION getCallerQualifiedName RETURN VARCHAR2 IS
+        ltab_qualifiedName utl_call_stack.unit_qualified_name;
+        l_Result           VARCHAR2(255);
+        e_BadDepthIndicator EXCEPTION;
+        PRAGMA EXCEPTION_INIT(e_BadDepthIndicator, -64610);
+    BEGIN
+        ltab_qualifiedName := utl_call_stack.subprogram(dynamic_depth => 3);
+        --
+        FOR idx IN 1 .. ltab_qualifiedName.count LOOP
+            l_Result := l_Result || '.' || ltab_qualifiedName(idx);
+        END LOOP;
+        --  
+        RETURN ltrim(l_Result, '.');
+    EXCEPTION
+        WHEN e_BadDepthIndicator THEN
+            RETURN 'TOP_LEVEL_BLOCK';
+    END;
+
+    ----------------------------------------------------------------------------
+    FUNCTION getCurrentQualifiedName RETURN VARCHAR2 IS
+        ltab_qualifiedName utl_call_stack.unit_qualified_name;
+        l_Result           VARCHAR2(255);
+    BEGIN
+        ltab_qualifiedName := utl_call_stack.subprogram(dynamic_depth => 2);
+        --
+        FOR idx IN 1 .. ltab_qualifiedName.count LOOP
+            l_Result := l_Result || '.' || ltab_qualifiedName(idx);
+        END LOOP;
+        --  
+        RETURN ltrim(l_Result, '.');
+    END;
+
 END quilt_util;
 /

@@ -32,5 +32,8 @@ CREATE OR REPLACE PACKAGE quilt_util IS
         p_char   IN VARCHAR2 DEFAULT '%'
     ) RETURN BOOLEAN;
 
+    FUNCTION getCallerQualifiedName RETURN VARCHAR2;
+    FUNCTION getCurrentQualifiedName RETURN VARCHAR2;
+
 END quilt_util;
 /

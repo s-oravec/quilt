@@ -13,6 +13,7 @@ GRANT CREATE PROCEDURE to &&g_quilt_dev_schema;
 GRANT CREATE TYPE to &&g_quilt_dev_schema;
 GRANT CREATE SEQUENCE TO &&g_quilt_dev_schema;
 GRANT CREATE VIEW TO &&g_quilt_dev_schema;
+GRANT CREATE SYNONYM TO &&g_quilt_dev_schema;
 
 --testing only
 GRANT DEBUG CONNECT SESSION TO &&g_quilt_dev_schema;

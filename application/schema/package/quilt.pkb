@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE BODY quilt IS
     PROCEDURE spying_start(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) IS
         l_run_id NUMBER;
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.spying_start');
+        quilt_logger.log_detail('begin');
     
         -- start profilingu
         dbms_profiler.start_profiler(run_comment  => to_char(SYSDATE, quilt_const.DATE_TIME_FM),

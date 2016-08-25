@@ -5,3 +5,4 @@
 /.idea/
 /**/*.~*
 w
+/node_modules/

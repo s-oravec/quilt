@@ -1,17 +1,6 @@
 CREATE OR REPLACE PACKAGE quilt_core IS
 
-    -- Author  : HENRY
-    -- Created : 17.12.2015 16:45:08
-    -- Purpose : PL/SQL code coverage tool
-    -- Purpose : obsluha parametru testovani - RUNID,SID,SESSIONID
-
-    -- Public type declarations
-
-    -- Public constant declarations
-
-    -- Public variable declarations
-
-    -- Public function and procedure declarations
+    -- PL/SQL code coverage tool - parameters of testing - RUNID,SID,SESSIONID
 
     /** set RUNID */
     PROCEDURE set_Runid(p_runid IN NUMBER);
@@ -24,9 +13,6 @@ CREATE OR REPLACE PACKAGE quilt_core IS
 
     /** get SESSIONID */
     FUNCTION get_SESSIONID RETURN NUMBER;
-
-    /** inicialization from session */
-    PROCEDURE init;
 
     /** set test name */
     PROCEDURE set_TestName(p_testname IN VARCHAR2);
