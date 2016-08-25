@@ -2,6 +2,7 @@ CREATE OR REPLACE PACKAGE quilt IS
 
     -- PL/SQL code coverage tool - start/stop profiling using DBMS_PROFILER
 
+    -- Default Test name
     DEFAULT_TEST_NAME CONSTANT VARCHAR2(255) := 'Code coverage test';
 
     -- Starts profilign
