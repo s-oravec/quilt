@@ -1,3 +1,4 @@
+set serveroutput on size unlimited format wrapeds
 SET TERM ON
 SET ECHO OFF
 
