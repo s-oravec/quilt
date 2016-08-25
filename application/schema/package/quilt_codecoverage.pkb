@@ -1,17 +1,11 @@
 CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
 
-    -- Private type declarations
-
-    -- Private constant declarations
-
-    -- Private variable declarations
-
     /** CURSOR data report */
     CURSOR rcu_report
     (
-        ri NUMBER,
-        si NUMBER,
-        se NUMBER
+        p_runId     NUMBER,
+        p_SID       NUMBER,
+        p_sessionId NUMBER
     ) IS
         WITH plsql AS
          (SELECT r.runid,
@@ -27,20 +21,20 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                  d.total_occur,
                  d.total_time,
                  u.unit_number
-            FROM PLSQL_PROFILER_RUNS r, PLSQL_PROFILER_UNITS u, PLSQL_PROFILER_DATA D
-           WHERE r.runid = ri
+            FROM plsql_profiler_runs r, plsql_profiler_units u, plsql_profiler_data D
+           WHERE r.runid = p_runId
              AND r.runid = u.runid
              AND u.runid = d.runid
              AND u.unit_number = d.unit_number
              AND u.unit_type != 'ANONYMOUS BLOCK')
-        SELECT s.OWNER, s.NAME, s.TYPE, s.LINE, s.text, p.runid, p.unit_number, p.total_occur, p.total_time
+        SELECT s.owner, s.name, s.type, s.line, s.text, p.runid, p.unit_number, p.total_occur, p.total_time
           FROM all_source s, plsql P, quilt_methods q
-         WHERE s.OWNER LIKE q.object_schema
-           AND s.NAME LIKE q.object_name
-           AND s.TYPE = nvl(q.object_type, 'PACKAGE BODY')
+         WHERE s.owner LIKE q.object_schema
+           AND s.name LIKE q.object_name
+           AND s.type = nvl(q.object_type, 'PACKAGE BODY')
               --
-           AND q.sid = si
-           AND q.sessionid = se
+           AND q.sid = p_SID
+           AND q.sessionid = p_sessionId
               --
            AND s.OWNER = p.owner(+)
            AND s.NAME = p.name(+)
@@ -51,38 +45,38 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     /** CURSOR total rows */
     CURSOR rcu_total
     (
-        ri NUMBER,
-        Na VARCHAR2,
-        ow VARCHAR2,
-        ty VARCHAR2
+        p_runId    NUMBER,
+        p_unitName VARCHAR2,
+        p_owner    VARCHAR2,
+        p_unitType VARCHAR2
     ) IS
         SELECT Count(1) Cnt
           FROM plsql_profiler_data D, plsql_profiler_units u
-         WHERE d.runid = ri
+         WHERE d.runid = p_runId
            AND u.runid = d.runid
            AND u.unit_number = d.unit_number
-           AND u.unit_name = upper(Na)
-           AND u.unit_owner = upper(ow)
+           AND u.unit_name = upper(p_unitName)
+           AND u.unit_owner = upper(p_owner)
               --
-           AND u.unit_type = upper(ty);
+           AND u.unit_type = upper(p_unitType);
 
     /** CURSOR exec rows */
     CURSOR rcu_exec
     (
-        ri NUMBER,
-        Na VARCHAR2,
-        ow VARCHAR2,
-        ty VARCHAR2
+        p_runId    NUMBER,
+        p_unitName VARCHAR2,
+        p_owner    VARCHAR2,
+        p_unitType VARCHAR2
     ) IS
         SELECT Count(1) Cnt
           FROM plsql_profiler_data D, plsql_profiler_units u
-         WHERE d.runid = ri
+         WHERE d.runid = p_runId
            AND u.runid = d.runid
            AND u.unit_number = d.unit_number
-           AND u.unit_name = upper(Na)
-           AND u.unit_owner = upper(ow)
+           AND u.unit_name = upper(p_unitName)
+           AND u.unit_owner = upper(p_owner)
               --
-           AND u.unit_type = upper(ty)
+           AND u.unit_type = upper(p_unitType)
            AND d.total_occur > 0;
 
     -- Function and procedure implementations
@@ -90,116 +84,108 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     /** Insert row to the table of reports */
     PROCEDURE insert_Row
     (
-        p_sessionid IN NUMBER,
+        p_sessionId IN NUMBER,
         p_sid       IN NUMBER,
-        p_runid     IN NUMBER,
+        p_runId     IN NUMBER,
         p_idx       IN OUT NUMBER,
         p_line      IN VARCHAR2
     ) IS
     BEGIN
         --
-        INSERT INTO quilt_report (sessionid, SID, runid, idx, Line) VALUES (p_sessionid, p_sid, p_runid, p_idx, p_line);
+        INSERT INTO quilt_report (sessionid, SID, runid, idx, Line) VALUES (p_sessionId, p_sid, p_runId, p_idx, p_line);
         p_idx := p_idx + 1;
     END insert_Row;
 
     /** Save object data to the table of reports */
     PROCEDURE save_ObjectReport
     (
-        p_sessionid IN NUMBER,
+        p_sessionId IN NUMBER,
         p_sid       IN NUMBER,
-        p_runid     IN NUMBER,
+        p_runId     IN NUMBER,
         p_object    IN OUT quilt_report_process_type
     ) IS
-    
-        lint_idx NUMBER := p_object.idx;
+        l_idx NUMBER := p_object.idx;
+        --
+        PROCEDURE lproc_insRow
+        (
+            p_idx  IN OUT NUMBER,
+            p_line IN VARCHAR2
+        ) IS
+        BEGIN
+            insert_row(p_sessionId, p_SID, p_runId, p_idx, p_line);
+            quilt_logger.log_detail(p_line);
+        END;
+        --
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport');
-    
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : idx ' || lint_idx);
+        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, p_runId=$3', p_sessionId, p_SID, p_runId);
+        quilt_logger.log_detail('idx', l_idx);
         -- TN
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_TN || p_object.tag_tn);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : TN ' || p_object.tag_tn);
+        lproc_insRow(l_idx, quilt_const.TAG_TN || p_object.tag_tn);
         -- SF
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_SF || p_object.tag_sf);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : SF ' || p_object.tag_sf);
+        lproc_insRow(l_idx, quilt_const.TAG_SF || p_object.tag_sf);
         -- FN list
         IF p_object.tag_fn IS NOT NULL AND p_object.tag_fn.count > 0 THEN
             FOR i IN p_object.tag_fn.first .. p_object.tag_fn.last LOOP
-                insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_FN || p_object.tag_fn(i));
-                quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport: FN ' || p_object.tag_fn(i));
+                lproc_insRow(l_idx, quilt_const.TAG_FN || p_object.tag_fn(i));
             END LOOP;
         END IF;
         -- FNDA list
         IF p_object.tag_fnda IS NOT NULL AND p_object.tag_fnda.count > 0 THEN
             FOR i IN p_object.tag_fnda.first .. p_object.tag_fnda.last LOOP
-                insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_FNDA || p_object.tag_fnda(i));
-                quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport: FNDA ' || p_object.tag_fnda(i));
+                lproc_insRow(l_idx, quilt_const.TAG_FNDA || p_object.tag_fnda(i));
             END LOOP;
         END IF;
         -- FNF
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_FNF || p_object.tag_fnf);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : FNF ' || p_object.tag_fnf);
+        lproc_insRow(l_idx, quilt_const.TAG_FNF || p_object.tag_fnf);
         -- FNH
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_FNH || p_object.tag_fnh);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : FNF ' || p_object.tag_fnf);
+        lproc_insRow(l_idx, quilt_const.TAG_FNH || p_object.tag_fnh);
         -- BRDA list
         IF p_object.tag_brda IS NOT NULL AND p_object.tag_brda.count > 0 THEN
             FOR i IN p_object.tag_brda.first .. p_object.tag_brda.last LOOP
-                insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_BRDA || p_object.tag_brda(i));
-                quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport: BRDA ' || p_object.tag_brda(i));
+                lproc_insRow(l_idx, quilt_const.TAG_BRDA || p_object.tag_brda(i));
             END LOOP;
         END IF;
         -- BRF
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_BRF || p_object.tag_brf);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : FNF ' || p_object.tag_fnf);
+        lproc_insRow(l_idx, quilt_const.TAG_BRF || p_object.tag_brf);
         -- BFH
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_BRH || p_object.tag_brh);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : FNF ' || p_object.tag_fnf);
+        lproc_insRow(l_idx, quilt_const.TAG_BRH || p_object.tag_brh);
         -- DA list
         IF p_object.tag_da IS NOT NULL AND p_object.tag_da.count > 0 THEN
             FOR i IN p_object.tag_da.first .. p_object.tag_da.last LOOP
-                insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_DA || p_object.tag_da(i));
-                quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport: DA ' || p_object.tag_da(i));
+                lproc_insRow(l_idx, quilt_const.TAG_DA || p_object.tag_da(i));
             END LOOP;
         END IF;
         -- LH
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_LH || p_object.tag_lh);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : LH ' || p_object.tag_lh);
+        lproc_insRow(l_idx, quilt_const.TAG_LH || p_object.tag_lh);
         -- LF
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_LF || p_object.tag_lf);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : LF ' || p_object.tag_lf);
+        lproc_insRow(l_idx, quilt_const.TAG_LF || p_object.tag_lf);
         -- EOR
-        insert_Row(p_sessionid, p_sid, p_runid, lint_idx, quilt_const.TAG_EOR);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.save_ObjectReport : EOR ' || p_object.tag_eor);
+        lproc_insRow(l_idx, quilt_const.TAG_EOR);
     
-        p_object.idx := lint_idx;
+        p_object.idx := l_idx;
         COMMIT;
     END save_ObjectReport;
 
     /** get list of spying objects */
     FUNCTION get_SpyingObjects
     (
-        p_sessionid IN NUMBER DEFAULT NULL,
+        p_sessionId IN NUMBER DEFAULT NULL,
         p_sid       IN NUMBER DEFAULT NULL
     ) RETURN SYS_REFCURSOR IS
-    
-        lint_sessionid NUMBER := nvl(p_sessionid, quilt_core.get_SESSIONID);
-        lint_sid       NUMBER := nvl(p_sid, quilt_core.get_SID);
-        lrcu_result    SYS_REFCURSOR;
+        l_sessionId NUMBER := nvl(p_sessionId, quilt_core.get_sessionId);
+        l_SID       NUMBER := nvl(p_sid, quilt_core.get_SID);
+        lrcu_result SYS_REFCURSOR;
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.get_SpyingObjects');
-        quilt_logger.log_detail($$PLSQL_UNIT || '.get_SpyingObjects:p_sessionid ' || p_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.get_SpyingObjects:p_sid ' || p_sid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.get_SpyingObjects:lint_sessionid ' || lint_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.get_SpyingObjects:lint_sid ' || lint_sid);
+        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
         --
         OPEN lrcu_result FOR
             SELECT object_schema, object_name, object_type
               FROM quilt_methods
-             WHERE SID = lint_sid
-               AND sessionid = lint_sessionid;
-    
+             WHERE SID = l_SID
+               AND sessionid = l_sessionId;
+        --
         RETURN lrcu_result;
+        --
     END get_SpyingObjects;
 
     /** set spying objects for session */
@@ -208,35 +194,31 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         p_schema      IN VARCHAR2,
         p_object      IN VARCHAR2,
         p_object_type IN VARCHAR2 DEFAULT NULL,
-        p_sessionid   IN NUMBER DEFAULT NULL,
+        p_sessionId   IN NUMBER DEFAULT NULL,
         p_sid         IN NUMBER DEFAULT NULL
     ) IS
     
-        lint_sessionid quilt_methods.sessionid%Type := nvl(p_sessionid, quilt_core.get_SESSIONID);
-        lint_sid       quilt_methods.sid%Type := nvl(p_sid, quilt_core.get_SID);
-        ltab_objs      quilt_object_list_type := quilt_object_list_type();
+        l_sessionId quilt_methods.sessionid%Type := nvl(p_sessionId, quilt_core.get_SESSIONID);
+        l_SID       quilt_methods.sid%Type := nvl(p_sid, quilt_core.get_SID);
+        ltab_objs   quilt_object_list_type := quilt_object_list_type();
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.set_SpyingObject');
-        quilt_logger.log_detail($$PLSQL_UNIT || '.set_SpyingObject:p_sessionid ' || p_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.set_SpyingObject:p_sid ' || p_sid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.set_SpyingObject:lint_sessionid ' || lint_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.set_SpyingObject:lint_sid ' || lint_sid);
-    
+        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
+        --
         ltab_objs := quilt_util.getObjectList(p_schema, p_object, p_object_type);
-    
+        --
         FOR i IN (SELECT schema_name, object_name, object_type FROM TABLE(ltab_objs)) LOOP
             BEGIN
                 INSERT INTO quilt_methods
                     (sessionid, SID, object_schema, object_name, object_type, insert_dt)
                 VALUES
-                    (lint_sessionid, lint_sid, i.schema_name, i.object_name, i.object_type, SYSDATE);
+                    (l_sessionId, l_SID, i.schema_name, i.object_name, i.object_type, SYSDATE);
             EXCEPTION
                 WHEN OTHERS THEN
                     -- todo specificka
                     UPDATE quilt_methods
                        SET last_dt = SYSDATE
-                     WHERE sessionid = lint_sessionid
-                       AND SID = lint_sid
+                     WHERE sessionid = l_sessionId
+                       AND SID = l_SID
                        AND object_schema = i.schema_name
                        AND object_name = i.object_name
                        AND nvl(object_type, '-1') = nvl(i.object_type, '-1');
@@ -249,31 +231,31 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     /** delete list of spying objects for session */
     PROCEDURE del_SpyingObjectList
     (
-        p_sessionid IN NUMBER DEFAULT NULL,
+        p_sessionId IN NUMBER DEFAULT NULL,
         p_sid       IN NUMBER DEFAULT NULL
     ) IS
     
-        lint_sessionid NUMBER := nvl(p_sessionid, quilt_core.get_SESSIONID);
-        lint_sid       NUMBER := nvl(p_sid, quilt_core.get_SID);
+        l_sessionId NUMBER := nvl(p_sessionId, quilt_core.get_SESSIONID);
+        l_SID       NUMBER := nvl(p_sid, quilt_core.get_SID);
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.del_SpyingObjectList');
-        quilt_logger.log_detail($$PLSQL_UNIT || '.del_SpyingObjectList:p_sessionid ' || p_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.del_SpyingObjectList:p_sid ' || p_sid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.del_SpyingObjectList:lint_sessionid ' || lint_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.del_SpyingObjectList:lint_sid ' || lint_sid);
+        quilt_logger.log_detail('.del_SpyingObjectList');
+        quilt_logger.log_detail('.del_SpyingObjectList:p_sessionId ' || p_sessionId);
+        quilt_logger.log_detail('.del_SpyingObjectList:p_sid ' || p_sid);
+        quilt_logger.log_detail('.del_SpyingObjectList:l_sessionId ' || l_sessionId);
+        quilt_logger.log_detail('.del_SpyingObjectList:l_SID ' || l_SID);
     
         DELETE quilt_methods
-         WHERE SID = lint_sid
-           AND sessionid = lint_sessionid;
+         WHERE SID = l_SID
+           AND sessionid = l_sessionId;
         COMMIT;
     END del_SpyingObjectList;
 
     /** create dat for report - lcov.info */
     PROCEDURE ProcessingCodeCoverage
     (
-        p_sessionid IN NUMBER DEFAULT NULL,
+        p_sessionId IN NUMBER DEFAULT NULL,
         p_sid       IN NUMBER DEFAULT NULL,
-        p_runid     IN NUMBER DEFAULT NULL
+        p_runId     IN NUMBER DEFAULT NULL
     ) IS
     
         lrec_report rcu_report%ROWTYPE;
@@ -283,31 +265,31 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         --lint_idx       NUMBER := 1;
         lbol_first_run BOOLEAN := FALSE;
         --
-        lint_sessionid NUMBER := nvl(p_sessionid, quilt_core.get_SESSIONID);
-        lint_sid       NUMBER := nvl(p_sid, quilt_core.get_SID);
-        lint_runid     NUMBER := nvl(p_runid, quilt_core.get_Runid);
-        lstr_testname  VARCHAR2(2000) := nvl(quilt_core.get_TestName, quilt.DEFAULT_TEST_NAME);
-        lobj_report    quilt_report_process_type := quilt_report_process_type(2, quilt_const.TAG_EOR);
-        lstr_name      VARCHAR2(4000);
+        l_sessionId   NUMBER := nvl(p_sessionId, quilt_core.get_SESSIONID);
+        l_SID         NUMBER := nvl(p_sid, quilt_core.get_SID);
+        lint_runid    NUMBER := nvl(p_runId, quilt_core.get_Runid);
+        lstr_testname VARCHAR2(2000) := nvl(quilt_core.get_TestName, quilt.DEFAULT_TEST_NAME);
+        lobj_report   quilt_report_process_type := quilt_report_process_type(2, quilt_const.TAG_EOR);
+        lstr_name     VARCHAR2(4000);
         --
         lint_branch_cnt NUMBER;
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage');
+        quilt_logger.log_detail('.ProcessingCodeCoverage');
     
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:p_sessionid ' || p_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:p_sid ' || p_sid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:p_runid ' || p_runid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:lint_sessionid ' || lint_sessionid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:lint_sid ' || lint_sid);
-        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage:lint_runid ' || lint_runid);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:p_sessionId ' || p_sessionId);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:p_sid ' || p_sid);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:p_runId ' || p_runId);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:l_sessionId ' || l_sessionId);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:l_SID ' || l_SID);
+        quilt_logger.log_detail('.ProcessingCodeCoverage:lint_runid ' || lint_runid);
         --
         --uklid pred novym reportem pro stejne RUNID
         DELETE quilt_report
-         WHERE sessionid = lint_sessionid
-           AND SID = lint_sid
+         WHERE sessionid = l_sessionId
+           AND SID = l_SID
            AND runid = lint_runid;
         --
-        OPEN rcu_report(lint_runid, lint_sid, lint_sessionid);
+        OPEN rcu_report(lint_runid, l_SID, l_sessionId);
         --
         LOOP
             FETCH rcu_report
@@ -318,16 +300,16 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             IF lrec_report.line = 1 THEN
                 --
                 IF lbol_first_run THEN
-                    quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: vice souboru');
+                    quilt_logger.log_detail('.ProcessingCodeCoverage: vice souboru');
                     -- vice souboru, provedeme zapis dat z typu do tabulky
-                    quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: idx_1s ' || lobj_report.idx);
-                    save_ObjectReport(lint_sessionid, lint_sid, lint_runid, lobj_report);
+                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_1s ' || lobj_report.idx);
+                    save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
                     --
-                    quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: idx_1e ' || lobj_report.idx);
+                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_1e ' || lobj_report.idx);
                     lobj_report := quilt_report_process_type(lobj_report.idx, quilt_const.TAG_EOR);
-                    quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: idx_2 ' || lobj_report.idx);
+                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_2 ' || lobj_report.idx);
                 ELSE
-                    quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: prvni beh');
+                    quilt_logger.log_detail('.ProcessingCodeCoverage: prvni beh');
                     lbol_first_run := TRUE;
                 
                 END IF;
@@ -342,8 +324,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 lobj_report.tag_tn := lstr_testname;
                 -- SF
                 lobj_report.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
-                quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: ' || lint_runid || ',' || lrec_report.runid || ',' ||
-                                         lrec_report.name || ',' || lrec_report.owner || ',' || lrec_report.type);
+                quilt_logger.log_detail('.ProcessingCodeCoverage: ' || lint_runid || ',' || lrec_report.runid || ',' || lrec_report.name || ',' ||
+                                        lrec_report.owner || ',' || lrec_report.type);
             
                 OPEN rcu_total(lint_runid, lrec_report.name, lrec_report.owner, lrec_report.type);
                 OPEN rcu_exec(lint_runid, lrec_report.name, lrec_report.owner, lrec_report.type);
@@ -369,7 +351,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 
                 EXCEPTION
                     WHEN OTHERS THEN
-                        quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: FN: ' || SQLERRM);
+                        quilt_logger.log_detail('.ProcessingCodeCoverage: FN: ' || SQLERRM);
                         lstr_name := lrec_report.text;
                 END;
                 lobj_report.tag_fn.extend;
@@ -396,18 +378,18 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             lobj_report.tag_da.extend;
             --DA:<line number>,<execution count>[,<checksum>]
             lobj_report.tag_da(lobj_report.tag_da.last) := lrec_report.line || ',' || nvl(lrec_report.total_occur, 0);
-            quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: DA ' || quilt_const.TAG_DA || lrec_report.line || ',' ||
-                                     nvl(lrec_report.total_occur, 0));
+            quilt_logger.log_detail('.ProcessingCodeCoverage: DA ' || quilt_const.TAG_DA || lrec_report.line || ',' ||
+                                    nvl(lrec_report.total_occur, 0));
             --
         END LOOP;
         IF lobj_report.tag_da IS NOT NULL THEN
-            quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: ' || lobj_report.tag_da.count);
+            quilt_logger.log_detail('.ProcessingCodeCoverage: ' || lobj_report.tag_da.count);
         
             -- zapis
-            quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: zapis');
-            save_ObjectReport(lint_sessionid, lint_sid, lint_runid, lobj_report);
+            quilt_logger.log_detail('.ProcessingCodeCoverage: zapis');
+            save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
         ELSE
-            quilt_logger.log_detail($$PLSQL_UNIT || '.ProcessingCodeCoverage: lobj_report.tag_da is null!!!');
+            quilt_logger.log_detail('.ProcessingCodeCoverage: lobj_report.tag_da is null!!!');
         END IF;
     
         --

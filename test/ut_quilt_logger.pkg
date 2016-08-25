@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_logger AS
     BEGIN
         pete.set_method_description(D);
         -- prepare
-        l_guid := rawtohex(sys_guid());
+        l_guid := to_char(sys_guid());
         --test call
         quilt_logger.log_detail(l_guid);
         --test and assert

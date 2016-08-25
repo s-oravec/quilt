@@ -13,37 +13,33 @@ CREATE OR REPLACE PACKAGE BODY quilt_core IS
     END set_Runid;
 
     ----------------------------------------------------------------------------
-    FUNCTION get_Runid RETURN NUMBER IS
+    FUNCTION get_runId RETURN NUMBER IS
     BEGIN
-        quilt_logger.log_detail('begin');
         RETURN gint_runid;
     END get_Runid;
 
     ----------------------------------------------------------------------------
     FUNCTION get_SID RETURN NUMBER IS
     BEGIN
-        quilt_logger.log_detail('begin');
         RETURN sys_context('USERENV', 'SID');
     END get_SID;
 
     ----------------------------------------------------------------------------
     FUNCTION get_SESSIONID RETURN NUMBER IS
     BEGIN
-        quilt_logger.log_detail('begin');
         RETURN sys_context('USERENV', 'SESSIONID');
     END get_SESSIONID;
 
     ----------------------------------------------------------------------------
-    PROCEDURE set_TestName(p_testname IN VARCHAR2) IS
+    PROCEDURE set_TestName(p_testName IN VARCHAR2) IS
     BEGIN
-        quilt_logger.log_detail('begin');
-        gstr_testname := substr(p_testname, 1, quilt_const.TEST_NAME_MAX_LEN);
+        quilt_logger.log_detail('begin:p_testName=$1', p_testName);
+        gstr_testname := substr(p_testName, 1, quilt_const.TEST_NAME_MAX_LEN);
     END set_TestName;
 
     ----------------------------------------------------------------------------
     FUNCTION get_TestName RETURN VARCHAR2 IS
     BEGIN
-        quilt_logger.log_detail('begin');
         RETURN gstr_testname;
     END get_TestName;
 
