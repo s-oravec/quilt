@@ -286,7 +286,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage_pkg IS
         lint_sessionid NUMBER := nvl(p_sessionid, quilt_core_pkg.get_SESSIONID);
         lint_sid       NUMBER := nvl(p_sid, quilt_core_pkg.get_SID);
         lint_runid     NUMBER := nvl(p_runid, quilt_core_pkg.get_Runid);
-        lstr_testname  VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName, quilt_pkg.DEFAULT_TEST_NAME);
+        lstr_testname  VARCHAR2(2000) := nvl(quilt_core_pkg.get_TestName, quilt.DEFAULT_TEST_NAME);
         lobj_report    quilt_report_process_type := quilt_report_process_type(2, quilt_const_pkg.TAG_EOR);
         lstr_name      VARCHAR2(4000);
         --

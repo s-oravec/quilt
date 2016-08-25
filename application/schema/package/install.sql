@@ -12,8 +12,8 @@ prompt .. Creating package QUILT_LOG_PKG
 prompt .. Creating package QUILT_CORE_PKG
 @@quilt_core_pkg.pks
 
-prompt .. Creating package QUILT_PKG
-@@quilt_pkg.pks
+prompt .. Creating package QUILT
+@@quilt.pks
 
 prompt .. Creating package QUILT_CODECOVERAGE_PKG
 @@quilt_codecoverage_pkg.pks
@@ -27,8 +27,8 @@ prompt .. Creating package body QUILT_LOG_PKG
 prompt .. Creating package body QUILT_CORE_PKG
 @@quilt_core_pkg.pkb
 
-prompt .. Creating package body QUILT_PKG
-@@quilt_pkg.pkb
+prompt .. Creating package body QUILT
+@@quilt.pkb
 
 prompt .. Creating package body QUILT_CODECOVERAGE_PKG
 @@quilt_codecoverage_pkg.pkb

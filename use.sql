@@ -1,11 +1,11 @@
 rem
-rem Drops Quilt schema
+rem Run from your schema to use specific Quilt installation (schema)
 rem
 rem Usage
-rem     sql @drop.sql <environment>
+rem     sql @use.sql <Quilt schema>
 rem
 set verify off
-define g_environment = "&1"
+define g_quilt_schema = "&1"
 
 prompt init sqlsn
 @sqlsnrc
@@ -15,10 +15,10 @@ prompt require sqlsn-run module
 @&&sqlsn_require sqlsn-run
 
 prompt define action and script
-define g_run_action = drop
-define g_run_script = drop_&&g_environment..sql
+define g_run_action = use
+define g_run_script = use
 
-prompt Drop Quilt schema
+prompt Use Quilt schema
 @&&run_dir application
 
 show errors

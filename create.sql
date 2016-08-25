@@ -18,7 +18,7 @@ prompt define action and script
 define g_run_action = create
 define g_run_script = create_&&g_environment..sql
 
-prompt install application
+prompt Create Quilt schema
 @&&run_dir application
 
 show errors

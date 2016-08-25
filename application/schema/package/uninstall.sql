@@ -13,8 +13,8 @@ DROP PACKAGE quilt_log_pkg;
 prompt .. Dropping package QUILT_CORE_PKG
 DROP PACKAGE quilt_core_pkg;
 
-prompt .. Dropping package QUILT_PKG
-DROP PACKAGE quilt_pkg;
+prompt .. Dropping package QUILT
+DROP PACKAGE quilt;
 
 prompt .. Dropping package QUILT_CODECOVERAGE_PKG
 DROP PACKAGE quilt_codecoverage_pkg;

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE quilt_pkg IS
+CREATE OR REPLACE PACKAGE quilt IS
 
     -- PL/SQL code coverage tool - start/stop profiling using DBMS_PROFILER
 
@@ -14,5 +14,5 @@ CREATE OR REPLACE PACKAGE quilt_pkg IS
     --
     PROCEDURE spying_end;
 
-END quilt_pkg;
+END quilt;
 /

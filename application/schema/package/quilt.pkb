@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY quilt_pkg IS
+CREATE OR REPLACE PACKAGE BODY quilt IS
 
     ------------------------------------------------------------------------
     PROCEDURE spying_start(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) IS
@@ -32,5 +32,5 @@ CREATE OR REPLACE PACKAGE BODY quilt_pkg IS
         quilt_log_pkg.log_stop(quilt_core_pkg.get_Runid);
     END spying_end;
 
-END quilt_pkg;
+END quilt;
 /
