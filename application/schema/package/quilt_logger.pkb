@@ -48,38 +48,20 @@ CREATE OR REPLACE PACKAGE BODY quilt_logger IS
     ) IS
         PRAGMA AUTONOMOUS_TRANSACTION;
         l_caller VARCHAR2(255);
-        l_msg    quilt_log.msg%Type := p_msg;
-        --
-        Type tab IS TABLE OF VARCHAR2(255);
-        ltab_args tab;
-        --
-        FUNCTION replaceOrAppend(l_idx PLS_INTEGER) RETURN VARCHAR2 IS
-        BEGIN
-            IF instr(l_msg, '$' || l_idx) > 0 THEN
-                RETURN REPLACE(l_msg, '$' || l_idx, ltab_args(l_idx));
-            ELSIF ltab_args(l_idx) IS NOT NULL THEN
-                RETURN l_msg || ' ' || ltab_args(l_idx);
-            ELSE
-                RETURN l_msg;
-            END IF;
-        END;
-        --
+        l_msg    quilt_log.msg%Type;
     BEGIN
-        l_caller  := quilt_util.getCallerQualifiedName;
-        ltab_args := tab(p_placeholder1,
-                         p_placeholder2,
-                         p_placeholder3,
-                         p_placeholder4,
-                         p_placeholder5,
-                         p_placeholder6,
-                         p_placeholder7,
-                         p_placeholder8,
-                         p_placeholder9,
-                         p_placeholder10);
-        --
-        FOR argIdx IN 1 .. 10 LOOP
-            l_msg := replaceOrAppend(argIdx);
-        END LOOP;
+        l_caller := quilt_util.getCallerQualifiedName;
+        l_msg    := quilt_util.formatString(p_msg,
+                                            p_placeholder1,
+                                            p_placeholder2,
+                                            p_placeholder3,
+                                            p_placeholder4,
+                                            p_placeholder5,
+                                            p_placeholder6,
+                                            p_placeholder7,
+                                            p_placeholder8,
+                                            p_placeholder9,
+                                            p_placeholder10);
         --    
         INSERT INTO quilt_log
             (sessionid, SID, runid, procedure_name, msg, insert_ts)

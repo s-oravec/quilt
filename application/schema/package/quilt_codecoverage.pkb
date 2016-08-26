@@ -347,7 +347,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- FN:<line number of function start>,<function name>
                 BEGIN
-                    lstr_name := quilt_util.getName(lrec_report.text);
+                    lstr_name := quilt_util.getMethodName(lrec_report.text);
                 
                 EXCEPTION
                     WHEN OTHERS THEN
