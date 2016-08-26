@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     PROCEDURE setPLSQLOptimizeLevelAll(p_level IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1);
 
     -- get method name from source line that CONTAINS PROCEDURE/FUNCTION keyword
-    -- TODO: refactor to parser
+    -- TODO: refactor to quilt_parser
     --
     -- %param p_textLine - ALL_SOURCE.text for source line
     --

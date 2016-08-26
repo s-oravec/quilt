@@ -18,18 +18,20 @@ CREATE OR REPLACE PACKAGE BODY quilt IS
         quilt_core.set_Runid(l_run_id);
         -- zapamatovat si v package context: test name
         quilt_core.set_TestName(p_test_name);
+        quilt_logger.log_detail('end');
     END spying_start;
 
     ------------------------------------------------------------------------
     PROCEDURE spying_end IS
     BEGIN
-        quilt_logger.log_detail($$PLSQL_UNIT || '.spying_end');
+        quilt_logger.log_detail('begin');
     
         -- stop profilingu
         dbms_profiler.stop_profiler;
     
         -- zalogovat stop profilingu
         quilt_logger.log_stop(quilt_core.get_Runid);
+        quilt_logger.log_detail('end');
     END spying_end;
 
 END quilt;

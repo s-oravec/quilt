@@ -79,9 +79,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
            AND u.unit_type = upper(p_unitType)
            AND d.total_occur > 0;
 
-    -- Function and procedure implementations
-
-    /** Insert row to the table of reports */
+    ----------------------------------------------------------------------------    
     PROCEDURE insert_Row
     (
         p_sessionId IN NUMBER,
@@ -166,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         COMMIT;
     END save_ObjectReport;
 
-    /** get list of spying objects */
+    ----------------------------------------------------------------------------
     FUNCTION get_SpyingObjects
     (
         p_sessionId IN NUMBER DEFAULT NULL,
@@ -188,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         --
     END get_SpyingObjects;
 
-    /** set spying objects for session */
+    ----------------------------------------------------------------------------  
     PROCEDURE set_SpyingObject
     (
         p_schema      IN VARCHAR2,
@@ -226,31 +224,34 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         END LOOP;
         --
         COMMIT;
+        --
+        quilt_logger.log_detail('end');
+        --
     END set_SpyingObject;
 
-    /** delete list of spying objects for session */
+    ----------------------------------------------------------------------------
     PROCEDURE del_SpyingObjectList
     (
         p_sessionId IN NUMBER DEFAULT NULL,
         p_sid       IN NUMBER DEFAULT NULL
     ) IS
-    
+        PRAGMA AUTONOMOUS_TRANSACTION;
         l_sessionId NUMBER := nvl(p_sessionId, quilt_core.get_SESSIONID);
         l_SID       NUMBER := nvl(p_sid, quilt_core.get_SID);
     BEGIN
-        quilt_logger.log_detail('.del_SpyingObjectList');
-        quilt_logger.log_detail('.del_SpyingObjectList:p_sessionId ' || p_sessionId);
-        quilt_logger.log_detail('.del_SpyingObjectList:p_sid ' || p_sid);
-        quilt_logger.log_detail('.del_SpyingObjectList:l_sessionId ' || l_sessionId);
-        quilt_logger.log_detail('.del_SpyingObjectList:l_SID ' || l_SID);
-    
+        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
+        --    
         DELETE quilt_methods
          WHERE SID = l_SID
            AND sessionid = l_sessionId;
+        --
         COMMIT;
+        --
+        quilt_logger.log_detail('end');
+        --
     END del_SpyingObjectList;
 
-    /** create dat for report - lcov.info */
+    ----------------------------------------------------------------------------
     PROCEDURE ProcessingCodeCoverage
     (
         p_sessionId IN NUMBER DEFAULT NULL,
@@ -274,14 +275,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         --
         lint_branch_cnt NUMBER;
     BEGIN
-        quilt_logger.log_detail('.ProcessingCodeCoverage');
-    
-        quilt_logger.log_detail('.ProcessingCodeCoverage:p_sessionId ' || p_sessionId);
-        quilt_logger.log_detail('.ProcessingCodeCoverage:p_sid ' || p_sid);
-        quilt_logger.log_detail('.ProcessingCodeCoverage:p_runId ' || p_runId);
-        quilt_logger.log_detail('.ProcessingCodeCoverage:l_sessionId ' || l_sessionId);
-        quilt_logger.log_detail('.ProcessingCodeCoverage:l_SID ' || l_SID);
-        quilt_logger.log_detail('.ProcessingCodeCoverage:lint_runid ' || lint_runid);
+        quilt_logger.log_detail('begin:p_sesionId=$1, p_SID=$2, p_runId=$3, l_sessionId=$4, l_SID=$5, l_runId=$6',
+                                p_sessionId,
+                                p_sid,
+                                p_runId,
+                                l_sessionId,
+                                l_SID,
+                                lint_runid);
         --
         --uklid pred novym reportem pro stejne RUNID
         DELETE quilt_report
@@ -300,18 +300,17 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             IF lrec_report.line = 1 THEN
                 --
                 IF lbol_first_run THEN
-                    quilt_logger.log_detail('.ProcessingCodeCoverage: vice souboru');
+                    quilt_logger.log_detail('vice souboru');
                     -- vice souboru, provedeme zapis dat z typu do tabulky
-                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_1s ' || lobj_report.idx);
+                    quilt_logger.log_detail('idx_1s', lobj_report.idx);
                     save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
                     --
-                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_1e ' || lobj_report.idx);
+                    quilt_logger.log_detail('idx_1e', lobj_report.idx);
                     lobj_report := quilt_report_process_type(lobj_report.idx, quilt_const.TAG_EOR);
-                    quilt_logger.log_detail('.ProcessingCodeCoverage: idx_2 ' || lobj_report.idx);
+                    quilt_logger.log_detail('idx_2', lobj_report.idx);
                 ELSE
-                    quilt_logger.log_detail('.ProcessingCodeCoverage: prvni beh');
+                    quilt_logger.log_detail(': prvni beh');
                     lbol_first_run := TRUE;
-                
                 END IF;
                 --
                 lobj_report.tag_da   := quilt_report_type();
@@ -324,7 +323,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 lobj_report.tag_tn := lstr_testname;
                 -- SF
                 lobj_report.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
-                quilt_logger.log_detail('.ProcessingCodeCoverage: ' || lint_runid || ',' || lrec_report.runid || ',' || lrec_report.name || ',' ||
+                quilt_logger.log_detail(': ' || lint_runid || ',' || lrec_report.runid || ',' || lrec_report.name || ',' ||
                                         lrec_report.owner || ',' || lrec_report.type);
             
                 OPEN rcu_total(lint_runid, lrec_report.name, lrec_report.owner, lrec_report.type);
@@ -351,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 
                 EXCEPTION
                     WHEN OTHERS THEN
-                        quilt_logger.log_detail('.ProcessingCodeCoverage: FN: ' || SQLERRM);
+                        quilt_logger.log_detail(': FN: ' || SQLERRM);
                         lstr_name := lrec_report.text;
                 END;
                 lobj_report.tag_fn.extend;
@@ -378,18 +377,17 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             lobj_report.tag_da.extend;
             --DA:<line number>,<execution count>[,<checksum>]
             lobj_report.tag_da(lobj_report.tag_da.last) := lrec_report.line || ',' || nvl(lrec_report.total_occur, 0);
-            quilt_logger.log_detail('.ProcessingCodeCoverage: DA ' || quilt_const.TAG_DA || lrec_report.line || ',' ||
-                                    nvl(lrec_report.total_occur, 0));
+            quilt_logger.log_detail(': DA ' || quilt_const.TAG_DA || lrec_report.line || ',' || nvl(lrec_report.total_occur, 0));
             --
         END LOOP;
         IF lobj_report.tag_da IS NOT NULL THEN
-            quilt_logger.log_detail('.ProcessingCodeCoverage: ' || lobj_report.tag_da.count);
+            quilt_logger.log_detail(': ' || lobj_report.tag_da.count);
         
             -- zapis
-            quilt_logger.log_detail('.ProcessingCodeCoverage: zapis');
+            quilt_logger.log_detail(': zapis');
             save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
         ELSE
-            quilt_logger.log_detail('.ProcessingCodeCoverage: lobj_report.tag_da is null!!!');
+            quilt_logger.log_detail(': lobj_report.tag_da is null!!!');
         END IF;
     
         --
@@ -400,67 +398,66 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 CLOSE rcu_report;
             END IF;
     END ProcessingCodeCoverage;
-
-/*
-       A tracefile is made up of several human-readable lines of text, divided
-       into sections. If available, a tracefile begins with the testname which
-       is stored in the following format:
-
-         TN:<test name>
-
-       For  each  source  file  referenced in the .da file, there is a section
-       containing filename and coverage data:
-
-         SF:<absolute path to the source file>
-
-       Following is a list of line numbers for each function name found in the
-       source file:
-
-         FN:<line number of function start>,<function name>
-
-       Next,  there  is a list of execution counts for each instrumented func-
-       tion:
-
-         FNDA:<execution count>,<function name>
-
-       This list is followed by two lines containing the number  of  functions
-       found and hit:
-
-         FNF:<number of functions found>
-         FNH:<number of function hit>
-
-       Branch coverage information is stored which one line per branch:
-
-         BRDA:<line number>,<block number>,<branch number>,<taken>
-
-       Block  number  and  branch  number are gcc internal IDs for the branch.
-       Taken is either �-� if the basic block containing the branch was  never
-       executed or a number indicating how often that branch was taken.
-
-       Branch coverage summaries are stored in two lines:
-
-         BRF:<number of branches found>
-         BRH:<number of branches hit>
-
-       Then  there  is  a  list of execution counts for each instrumented line
-       (i.e. a line which resulted in executable code):
-
-         DA:<line number>,<execution count>[,<checksum>]
-
-       Note that there may be an optional checksum present  for  each  instru-
-       mented  line.  The  current  geninfo implementation uses an MD5 hash as
-       checksumming algorithm.
-
-       At the end of a section, there is a summary about how many  lines  were
-       found and how many were actually instrumented:
-
-         LH:<number of lines with a non-zero execution count>
-         LF:<number of instrumented lines>
-
-       Each sections ends with:
-
-         end_of_record
-*/
+    /*
+           A tracefile is made up of several human-readable lines of text, divided
+           into sections. If available, a tracefile begins with the testname which
+           is stored in the following format:
+    
+             TN:<test name>
+    
+           For  each  source  file  referenced in the .da file, there is a section
+           containing filename and coverage data:
+    
+             SF:<absolute path to the source file>
+    
+           Following is a list of line numbers for each function name found in the
+           source file:
+    
+             FN:<line number of function start>,<function name>
+    
+           Next,  there  is a list of execution counts for each instrumented func-
+           tion:
+    
+             FNDA:<execution count>,<function name>
+    
+           This list is followed by two lines containing the number  of  functions
+           found and hit:
+    
+             FNF:<number of functions found>
+             FNH:<number of function hit>
+    
+           Branch coverage information is stored which one line per branch:
+    
+             BRDA:<line number>,<block number>,<branch number>,<taken>
+    
+           Block  number  and  branch  number are gcc internal IDs for the branch.
+           Taken is either �-� if the basic block containing the branch was  never
+           executed or a number indicating how often that branch was taken.
+    
+           Branch coverage summaries are stored in two lines:
+    
+             BRF:<number of branches found>
+             BRH:<number of branches hit>
+    
+           Then  there  is  a  list of execution counts for each instrumented line
+           (i.e. a line which resulted in executable code):
+    
+             DA:<line number>,<execution count>[,<checksum>]
+    
+           Note that there may be an optional checksum present  for  each  instru-
+           mented  line.  The  current  geninfo implementation uses an MD5 hash as
+           checksumming algorithm.
+    
+           At the end of a section, there is a summary about how many  lines  were
+           found and how many were actually instrumented:
+    
+             LH:<number of lines with a non-zero execution count>
+             LF:<number of instrumented lines>
+    
+           Each sections ends with:
+    
+             end_of_record
+    */
 
 END quilt_codecoverage;
 /
