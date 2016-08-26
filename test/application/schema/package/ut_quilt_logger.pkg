@@ -1,0 +1,34 @@
+CREATE OR REPLACE PACKAGE ut_quilt_logger AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_Logger';
+
+    -- TODO: log_start - call and then check values in quilt_run table, use sys_guid test name
+    -- TODO: log_stop - start and then save timestamp, stop and check that value in table is between stored and current timestamp
+
+    PROCEDURE logDetailWorks(D VARCHAR2 := 'log detail works');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_logger AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE logDetailWorks(D VARCHAR2) IS
+        l_guid   varchar2(32);
+        lrec_log quilt_log%rowtype;
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        l_guid := to_char(sys_guid());
+        --test call
+        quilt_logger.log_detail(l_guid);
+        --test and assert
+        begin
+           select * into lrec_log from quilt_log where msg = l_guid;
+        exception when no_data_found then
+          pete_assert.fail('Logged message should be in the QUILT_LOG table');
+        end;
+        pete_assert.eq($$plsql_unit || '.LOGDETAILWORKS', lrec_log.procedure_name);
+    END;
+
+END;
+/

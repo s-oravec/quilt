@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     (
         p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2
-    ) RETURN NUMBER IS
+    ) RETURN BINARY_INTEGER IS
         l_Result NUMBER;
     BEGIN
         SELECT plsql_optimize_level
@@ -282,7 +282,6 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         EXCEPTION
             WHEN no_data_found THEN
                 quilt_logger.log_detail('not found');
-            
                 lobj_result := NULL;
         END;
         --    
@@ -295,20 +294,23 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     FUNCTION getObjectList
     (
         p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2 DEFAULT NULL
+        p_object_name IN VARCHAR2
     ) RETURN quilt_object_list_type IS
         ltab_result quilt_object_list_type;
     BEGIN
-        quilt_logger.log_detail('begin');
+        quilt_logger.log_detail('begin:p_owner=$1,p_object_name=$2,p_object_type=$3', p_owner, p_object_name);
         --
         SELECT quilt_object_type(OWNER, object_name, object_type)
           BULK COLLECT
           INTO ltab_result
           FROM all_objects
-         WHERE OWNER LIKE '%' || upper(p_owner) || '%'
-           AND object_name LIKE '%' || upper(p_object_name) || '%'
-           AND object_type LIKE '%' || upper(p_object_type) || '%';
+         WHERE OWNER LIKE upper(p_owner) ESCAPE '/'
+           AND object_name LIKE upper(p_object_name) ESCAPE '/'
+           AND object_type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
+                               quilt_const.OBJ_TYPE_TYPE_BODY,
+                               quilt_const.OBJ_TYPE_PROCEDURE,
+                               quilt_const.OBJ_TYPE_FUNCTION,
+                               quilt_const.OBJ_TYPE_TRIGGER);
         --    
         quilt_logger.log_detail('end');
         RETURN ltab_result;
@@ -393,9 +395,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         -- foreach arg
         FOR argIdx IN REVERSE 1 .. 10 LOOP
             -- if string contains plaaceholder $1, $2, ...
-            IF regexp_like(l_Result, '\$' || argIdx || '(\s|$)') THEN
+            IF regexp_like(l_Result, '\$' || argIdx) THEN
                 -- replace placeholder with placeholder value
-                l_Result := regexp_replace(l_Result, '(\s?)\$' || argIdx || '(\s|$)', '\1' || ltab_args(argIdx) || '\2');
+                l_Result := regexp_replace(l_Result, '\$' || argIdx, ltab_args(argIdx));
             ELSIF ltab_args(argIdx) IS NOT NULL THEN
                 -- else append to string if placeholder value is not null
                 l_Result := l_Result || ' ' || ltab_args(argIdx);

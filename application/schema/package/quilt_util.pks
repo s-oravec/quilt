@@ -11,6 +11,17 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     -- Goes beyond level 2 and performs optimizations automatically including techniques not specifically requested
     PLSQL_OPTIMIZE_LEVEL_3 CONSTANT BINARY_INTEGER := 3;
 
+    -- Returns objects PLSQL Optimize level
+    --
+    -- %param p_owner owner
+    -- %param p_object_name object_name
+    --
+    FUNCTION getPLSQLOptimizeLevel
+    (
+        p_owner       IN VARCHAR2,
+        p_object_name IN VARCHAR2
+    ) RETURN BINARY_INTEGER;
+
     -- TODO: set optimization to LEVEL 1 as it yields more profiling data
     -- Compiles object with PLSQL_OPTIMIZE_LEVEL = p_level
     --
@@ -42,7 +53,7 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     -- %param p_owner schema name
     -- %param p_object_name object name
     --
-    -- %return found quilt_object_type object or NO_DATA_FOUND
+    -- %return found quilt_object_type object or NULL when not found
     -- 
     FUNCTION getObject
     (
@@ -52,11 +63,13 @@ CREATE OR REPLACE PACKAGE quilt_util IS
 
     -- Gets list of objects (schemaName, objectName, objectType) from ALL_OBJECTS that match passed values using SQL LIKE expression with "\" as escape character
     --
+    -- %param p_owner schema name
+    -- %param p_object_name object name
+    --
     FUNCTION getObjectList
     (
         p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2 DEFAULT NULL
+        p_object_name IN VARCHAR2
     ) RETURN quilt_object_list_type;
 
     -- Returns true if p_string contains p_lookup

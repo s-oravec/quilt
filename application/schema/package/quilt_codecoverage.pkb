@@ -202,7 +202,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     BEGIN
         quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
         --
-        ltab_objs := quilt_util.getObjectList(p_schema, p_object, p_object_type);
+        ltab_objs := quilt_util.getObjectList(p_schema, p_object);
         --
         FOR i IN (SELECT schema_name, object_name, object_type FROM TABLE(ltab_objs)) LOOP
             BEGIN

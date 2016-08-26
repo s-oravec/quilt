@@ -10,11 +10,7 @@ BEGIN
 END;
 /
 
-prompt .. Creating test package UT_QUILT_LOGGER
-@@ut_quilt_logger.pkg
+@&&run_dir application
 
-prompt .. Creating test package UT_QUILT_METHODSCTRL
-@@ut_quilt_methodsctrl.pkg
+@&&run_dir fixture
 
-prompt .. Creating test package UT_QUILT_UTIL
-@@ut_quilt_util.pkg

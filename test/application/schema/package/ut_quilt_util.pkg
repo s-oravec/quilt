@@ -1,0 +1,220 @@
+CREATE OR REPLACE PACKAGE ut_quilt_util AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_Util';
+
+    -- TODO: setPLSQLOptimizeLevelAll has to be tested from other schema that Quilt DEV schema as it would try to recompile also this UT package
+    -- TODO: setPLSQLOptimizeLevel with different schema has to be tested from other schema that Quilt DEV schema
+    -- TODO: setPLSQLOptimizeLevel with only owner passed into method has to be tested from other schema that Quilt DEV schema as it would try to recompile also this UT package
+
+    PROCEDURE setOptLvlWithObjectExact(D VARCHAR2 := 'set PLSQL optimize level works for exact object');
+    PROCEDURE setOptLvlWithObjectLike(D VARCHAR2 := 'set PLSQL optimize level works for objects matching like expression');
+
+    PROCEDURE getOptLvlWorks(D VARCHAR2 := 'get PLSQL optimize level returns objects PLSQL Optimize level');
+
+    procedure containsWorks(D varchar2 := 'Contains works as expected');
+
+    procedure getObjectWorks(D varchar2 := 'gwtObject works as expected');
+    procedure getObjectReturnsNull(D varchar2 := 'getObject return NULL for non-existent object.');
+
+    PROCEDURE getCallerQualifiedName(D VARCHAR2 := 'getCallerQualifiedName works');
+    PROCEDURE getCurrentQualifiedName(D VARCHAR2 := 'getCurrenQualifiedName works');
+
+    PROCEDURE fstrNoPlaceholdersInStr(D VARCHAR2 := 'formatString does not change string if there are no placeholders in it');
+    PROCEDURE fstrReplacePlaceholders1(D VARCHAR2 := 'formatString replaces all occurences of placeholder');
+    PROCEDURE fstrReplacePlaceholders2(D VARCHAR2 := 'formatString replaces all occurences of placeholder');
+    PROCEDURE fstrAppendValueIfNoPlacehldr(D VARCHAR2 := 'formatString appends value if no placeholder found');
+    PROCEDURE fstr10Placeholders(D VARCHAR2 := 'formatString supports 10 placeholders');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
+
+    ----------------------------------------------------------------------------  
+    FUNCTION helper_getPLSQLOptimizeLevel
+    (
+        p_owner       IN VARCHAR2,
+        p_objecT_name IN VARCHAR2
+    ) RETURN BINARY_INTEGER IS
+        l_Result BINARY_INTEGER;
+    BEGIN
+        SELECT plsql_optimize_level
+          INTO l_Result
+          FROM all_plsql_object_settings t
+         WHERE t.owner = p_owner
+           AND t.name = p_object_name
+           AND t.type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
+                          quilt_const.OBJ_TYPE_TYPE_BODY,
+                          quilt_const.OBJ_TYPE_PROCEDURE,
+                          quilt_const.OBJ_TYPE_FUNCTION,
+                          quilt_const.OBJ_TYPE_TRIGGER);
+        --
+        RETURN l_Result;
+        --
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE helper_assertCallerEquals(p_callerQN IN VARCHAR2) IS
+    BEGIN
+        pete_assert.eq(p_callerQN, quilt_util.getCallerQualifiedName);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE fstrNoPlaceholdersInStr(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        pete_assert.eq('foo', quilt_util.formatString('foo'));
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE fstrReplacePlaceholders1(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        pete_assert.eq('foo foo', quilt_util.formatString('$1 $1', 'foo'));
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE fstrReplacePlaceholders2(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        pete_assert.eq('foo bar foo', quilt_util.formatString('$1 $2 $1', 'foo', 'bar'));
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE fstrAppendValueIfNoPlacehldr(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        -- NoFormat Start
+           pete_assert.eq('foo bar foo baz',
+                          quilt_util.formatString('$1 $2 $1',
+                                                  'foo', 'bar','baz'));
+           -- NoFormat End
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE fstr10Placeholders(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        -- NoFormat Start
+           pete_assert.eq('aoo boo coo doo eoo foo goo hoo ioo joo',
+                          quilt_util.formatString('$1 $2 $3 $4 $5 $6 $7 $8 $9 $10',
+                                                  'aoo','boo','coo','doo','eoo','foo','goo','hoo','ioo','joo'));
+           -- NoFormat End
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE setOptLvlWithObjectExact(D VARCHAR2) IS
+        --
+        PROCEDURE test_and_assert(p_object_name all_objects.object_name%Type) IS
+        BEGIN
+            quilt_util.setPLSQLOptimizeLevel(USER, p_object_name, quilt_util.PLSQL_OPTIMIZE_LEVEL_1);
+            pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_1,
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           'For object ' || p_object_name);
+            quilt_util.setPLSQLOptimizeLevel(USER, p_object_name, quilt_util.PLSQL_OPTIMIZE_LEVEL_2);
+            pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_2,
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           'For object ' || p_object_name);
+        END;
+        --
+    BEGIN
+        pete.set_method_description(D);
+        --
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_F');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_P');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_TRG');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_PKG');
+        --
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE setOptLvlWithObjectLike(D VARCHAR2) IS
+        --
+        PROCEDURE test(p_object_name all_objects.object_name%Type) IS
+        BEGIN
+            pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_1,
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           'For object ' || p_object_name);
+        END;
+        --
+    BEGIN
+        pete.set_method_description(D);
+        --
+        quilt_util.setPLSQLOptimizeLevel(USER, 'FIX_UTIL_OPTIMIZELEVEL%', quilt_util.PLSQL_OPTIMIZE_LEVEL_1);
+        test('FIX_UTIL_OPTIMIZELEVEL_F');
+        test('FIX_UTIL_OPTIMIZELEVEL_P');
+        test('FIX_UTIL_OPTIMIZELEVEL_TRG');
+        test('FIX_UTIL_OPTIMIZELEVEL_PKG');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE getOptLvlWorks(D VARCHAR2) IS
+        --
+        PROCEDURE test(p_object_name all_objects.object_name%Type) IS
+        BEGIN
+            pete_assert.eq(helper_getPLSQLOptimizeLevel(USER, p_object_name),
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           'For object ' || p_object_name);
+        END;
+        --
+    BEGIN
+        pete.set_method_description(D);
+        --
+        test('FIX_UTIL_OPTIMIZELEVEL_F');
+        test('FIX_UTIL_OPTIMIZELEVEL_P');
+        test('FIX_UTIL_OPTIMIZELEVEL_TRG');
+        test('FIX_UTIL_OPTIMIZELEVEL_PKG');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE getCallerQualifiedName(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        helper_assertCallerEquals($$PLSQL_UNIT || '.GETCALLERQUALIFIEDNAME');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE getCurrentQualifiedName(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+        pete_assert.eq($$PLSQL_UNIT || '.GETCURRENTQUALIFIEDNAME', quilt_util.getCurrentQualifiedName);
+    END;
+
+
+    ----------------------------------------------------------------------------
+    procedure containsWorks(D varchar2 := 'Contains works as expected') IS
+    BEGIN
+        pete.set_method_description(D);
+        pete_assert.this(quilt_util.contains('123','1'));
+        pete_assert.this(quilt_util.contains('1%3','%'));
+        pete_assert.this(quilt_util.contains('^%3','^'));
+        pete_assert.this(quilt_util.contains('1%$','$'));
+        pete_assert.this(quilt_util.contains('1''3',''''));
+    END;
+
+
+
+    ----------------------------------------------------------------------------
+    procedure getObjectWorks(D varchar2) is
+        l_object quilt_object_type;
+    BEGIN
+        pete.set_method_description(D);
+        --
+        l_object := quilt_util.getObject(user, 'FIX_UTIL_OPTIMIZELEVEL_F');
+        --
+        pete_assert.eq(user, l_object.schema_name);
+        pete_assert.eq('FIX_UTIL_OPTIMIZELEVEL_F', l_object.object_name);
+        pete_assert.eq('FUNCTION', l_object.object_type);
+    END;
+
+    ----------------------------------------------------------------------------
+    procedure getObjectReturnsNull(D varchar2) is
+        l_object quilt_object_type;
+    BEGIN
+        --log
+        pete.set_method_description(D);
+        l_object := quilt_util.getObject(user, '_FOO');
+        pete_assert.this(l_object is null, 'Returned object should be null');
+    END;
+
+END;
+/
