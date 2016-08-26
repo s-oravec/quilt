@@ -5,15 +5,12 @@ CREATE OR REPLACE PACKAGE BODY quilt IS
         l_run_id NUMBER;
     BEGIN
         quilt_logger.log_detail('begin');
-    
         -- start profilingu
         dbms_profiler.start_profiler(run_comment  => to_char(SYSDATE, quilt_const.DATE_TIME_FM),
                                      run_comment1 => p_test_name,
                                      run_number   => l_run_id);
-    
         -- zalogovat start profilingu
         quilt_logger.log_start(p_runid => l_run_id, p_test_name => p_test_name);
-    
         -- zapamatovat si v package context: runid
         quilt_core.set_Runid(l_run_id);
         -- zapamatovat si v package context: test name
@@ -25,14 +22,36 @@ CREATE OR REPLACE PACKAGE BODY quilt IS
     PROCEDURE spying_end IS
     BEGIN
         quilt_logger.log_detail('begin');
-    
         -- stop profilingu
         dbms_profiler.stop_profiler;
-    
         -- zalogovat stop profilingu
         quilt_logger.log_stop(quilt_core.get_Runid);
         quilt_logger.log_detail('end');
     END spying_end;
+
+    ------------------------------------------------------------------------
+    PROCEDURE enableReport
+    (
+        OWNER       IN VARCHAR2,
+        object_name IN VARCHAR2
+    ) IS
+    BEGIN
+        quilt_logger.log_detail('begin:owner=$1,object_name=$2', OWNER, object_name);
+        quilt_MethodsCtrl.enableReport(OWNER, object_name);
+        quilt_logger.log_detail('end');
+    END enableReport;
+
+    ------------------------------------------------------------------------
+    PROCEDURE disableReport
+    (
+        OWNER       IN VARCHAR2,
+        object_name IN VARCHAR2
+    ) IS
+    BEGIN
+        quilt_logger.log_detail('begin:owner=$1,object_name=$2', OWNER, object_name);
+        quilt_MethodsCtrl.disableReport(OWNER, object_name);
+        quilt_logger.log_detail('end');
+    END disableReport;
 
 END quilt;
 /

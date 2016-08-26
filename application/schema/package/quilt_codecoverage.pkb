@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
              AND u.unit_type != 'ANONYMOUS BLOCK')
         SELECT s.owner, s.name, s.type, s.line, s.text, p.runid, p.unit_number, p.total_occur, p.total_time
           FROM all_source s, plsql P, quilt_methods q
-         WHERE s.owner LIKE q.object_schema
+         WHERE s.owner LIKE q.owner
            AND s.name LIKE q.object_name
            AND s.type = nvl(q.object_type, 'PACKAGE BODY')
               --
@@ -177,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
         --
         OPEN lrcu_result FOR
-            SELECT object_schema, object_name, object_type
+            SELECT OWNER, object_name, object_type
               FROM quilt_methods
              WHERE SID = l_SID
                AND sessionid = l_sessionId;
@@ -207,19 +207,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         FOR i IN (SELECT schema_name, object_name, object_type FROM TABLE(ltab_objs)) LOOP
             BEGIN
                 INSERT INTO quilt_methods
-                    (sessionid, SID, object_schema, object_name, object_type, insert_dt)
+                    (sessionid, SID, OWNER, object_name, object_type)
                 VALUES
-                    (l_sessionId, l_SID, i.schema_name, i.object_name, i.object_type, SYSDATE);
+                    (l_sessionId, l_SID, i.schema_name, i.object_name, i.object_type);
             EXCEPTION
                 WHEN OTHERS THEN
-                    -- todo specificka
-                    UPDATE quilt_methods
-                       SET last_dt = SYSDATE
-                     WHERE sessionid = l_sessionId
-                       AND SID = l_SID
-                       AND object_schema = i.schema_name
-                       AND object_name = i.object_name
-                       AND nvl(object_type, '-1') = nvl(i.object_type, '-1');
+                    -- todo specificka 
+                    NULL;
             END;
         END LOOP;
         --

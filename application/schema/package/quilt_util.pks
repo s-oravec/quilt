@@ -14,13 +14,13 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     -- TODO: set optimization to LEVEL 1 as it yields more profiling data
     -- Compiles object with PLSQL_OPTIMIZE_LEVEL = p_level
     --
-    -- %param p_schema_name object owner
+    -- %param p_owner object owner
     -- %param p_object_name object name
     -- %param p_level new PLSQL_OPTIMIZE_LEVEL %see http://bit.ly/2bnwv9O
     --
     PROCEDURE setPLSQLOptimizeLevel
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2,
         p_level       IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1
     );
@@ -39,14 +39,14 @@ CREATE OR REPLACE PACKAGE quilt_util IS
 
     -- Gets object (schemaName, objectName, objectType) from ALL_OBJECTS that match passed values using SQL LIKE expression with "\" as escape character
     --
-    -- %param p_schema_name schema name
+    -- %param p_owner schema name
     -- %param p_object_name object name
     --
     -- %return found quilt_object_type object or NO_DATA_FOUND
     -- 
     FUNCTION getObject
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2
     ) RETURN quilt_object_type;
 
@@ -54,7 +54,7 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     --
     FUNCTION getObjectList
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2,
         p_object_type IN VARCHAR2 DEFAULT NULL
     ) RETURN quilt_object_list_type;

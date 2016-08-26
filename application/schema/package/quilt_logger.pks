@@ -2,6 +2,8 @@ CREATE OR REPLACE PACKAGE quilt_logger IS
 
     -- Purpose : PL/SQL code coverage tool - logger
 
+    -- TODO: create method for logging exception
+
     -- log start of profiling into QUILT_RUN table
     --
     -- %param p_runId DBMS_PROFILER run number as returned from DBMS_PROFILER.start_profiler call

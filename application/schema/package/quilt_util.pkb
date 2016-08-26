@@ -3,31 +3,20 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     SPACE     CONSTANT VARCHAR2(1) := ' ';
     BRACKET   CONSTANT VARCHAR2(1) := '(';
     SEMICOLON CONSTANT VARCHAR2(1) := ';';
-    --
-
-    OBJ_TYPE_PACKAGE      CONSTANT VARCHAR2(30) := 'PACKAGE';
-    OBJ_TYPE_PACKAGE_BODY CONSTANT VARCHAR2(30) := 'PACKAGE BODY';
-    OBJ_TYPE_TYPE         CONSTANT VARCHAR2(30) := 'TYPE';
-    OBJ_TYPE_TYPE_BODY    CONSTANT VARCHAR2(30) := 'TYPE BODY';
-    OBJ_TYPE_PROCEDURE    CONSTANT VARCHAR2(30) := 'PROCEDURE';
-    OBJ_TYPE_FUNCTION     CONSTANT VARCHAR2(30) := 'FUNCTION';
-    OBJ_TYPE_TRIGGER      CONSTANT VARCHAR2(30) := 'TRIGGER';
 
     ----------------------------------------------------------------------------
     FUNCTION objectExists
     (
-        p_schema_name IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2
+        p_owner       IN VARCHAR2,
+        p_object_name IN VARCHAR2
     ) RETURN BOOLEAN IS
         l_Result NUMBER;
     BEGIN
         SELECT Count(*)
           INTO l_Result
           FROM all_objects t
-         WHERE t.owner = p_schema_name
-           AND t.object_name = p_object_name
-           AND t.object_type = p_object_type;
+         WHERE t.owner = p_owner
+           AND t.object_name = p_object_name;
         --
         RETURN TRUE;
         --
@@ -39,18 +28,21 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     ----------------------------------------------------------------------------
     FUNCTION getPLSQLOptimizeLevel
     (
-        p_schema_name IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2
+        p_owner       IN VARCHAR2,
+        p_object_name IN VARCHAR2
     ) RETURN NUMBER IS
         l_Result NUMBER;
     BEGIN
         SELECT plsql_optimize_level
           INTO l_Result
           FROM all_plsql_object_settings t
-         WHERE t.owner = p_schema_name
+         WHERE t.owner = p_owner
            AND t.name = p_object_name
-           AND t.type = p_object_type;
+           AND t.type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
+                          quilt_const.OBJ_TYPE_TYPE_BODY,
+                          quilt_const.OBJ_TYPE_PROCEDURE,
+                          quilt_const.OBJ_TYPE_FUNCTION,
+                          quilt_const.OBJ_TYPE_TRIGGER);
         --
         RETURN l_Result;
         --
@@ -62,7 +54,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     ----------------------------------------------------------------------------
     PROCEDURE setPLSQLOptimizeLevelImpl
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2,
         p_object_type IN VARCHAR2,
         p_level       IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1
@@ -72,8 +64,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         l_compile    VARCHAR2(400);
         l_sql        VARCHAR2(4000);
     BEGIN
-        quilt_logger.log_detail('begin:p_schema_name=$1, p_object_name=$2, p_object_type=$3, p_level=$4',
-                                p_schema_name,
+        quilt_logger.log_detail('begin:p_owner=$1, p_object_name=$2, p_object_type=$3, p_level=$4',
+                                p_owner,
                                 p_object_name,
                                 p_object_type,
                                 p_level);
@@ -87,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         --
         l_sql := REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(lc_sqlTemplate, '#level#', p_level), '#objectType#', l_ObjectType),
                                          '#schemaName#',
-                                         p_schema_name),
+                                         p_owner),
                                  '#objectName#',
                                  p_object_name),
                          '#compile#',
@@ -95,33 +87,31 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         quilt_logger.log_detail('l_sql', l_sql);
         --
         EXECUTE IMMEDIATE l_sql;
-        quilt_logger.log_detail('end:$1 $2.$3 compiled with PLSQL_OPTIMIZE_LEVEL=$4', p_object_type, p_schema_name, p_object_name, p_level);
+        quilt_logger.log_detail('end:$1 $2.$3 compiled with PLSQL_OPTIMIZE_LEVEL=$4', p_object_type, p_owner, p_object_name, p_level);
     END setPLSQLOptimizeLevelImpl;
 
     ----------------------------------------------------------------------------
     PROCEDURE setPLSQLOptimizeLevel
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2,
         p_level       IN NUMBER
     ) IS
         ltab_objectList quilt_object_list_type;
     BEGIN
-        quilt_logger.log_detail('begin:p_schema_name=$1, p_object_name=$2, p_level=$3', p_schema_name, p_object_name, p_level);
+        quilt_logger.log_detail('begin:p_owner=$1, p_object_name=$2, p_level=$3', p_owner, p_object_name, p_level);
         -- check level first
         IF p_level IN (PLSQL_OPTIMIZE_LEVEL_0, PLSQL_OPTIMIZE_LEVEL_1, PLSQL_OPTIMIZE_LEVEL_2, PLSQL_OPTIMIZE_LEVEL_3) THEN
             -- get both header/spec in case of package/type
-            ltab_objectList := getObjectList(p_schema_name, p_object_name);
+            ltab_objectList := getObjectList(p_owner, p_object_name);
             --
             FOR idx IN 1 .. ltab_objectList.count LOOP
-                IF ltab_objectList(idx).object_type IN (OBJ_TYPE_PACKAGE,
-                                    OBJ_TYPE_PACKAGE_BODY,
-                                    OBJ_TYPE_TYPE,
-                                    OBJ_TYPE_TYPE_BODY,
-                                    OBJ_TYPE_PROCEDURE,
-                                    OBJ_TYPE_FUNCTION,
-                                    OBJ_TYPE_TRIGGER) THEN
-                    setPLSQLOptimizeLevelImpl(p_schema_name => ltab_objectList(idx).schema_name,
+                IF ltab_objectList(idx).object_type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
+                                    quilt_const.OBJ_TYPE_TYPE_BODY,
+                                    quilt_const.OBJ_TYPE_PROCEDURE,
+                                    quilt_const.OBJ_TYPE_FUNCTION,
+                                    quilt_const.OBJ_TYPE_TRIGGER) THEN
+                    setPLSQLOptimizeLevelImpl(p_owner       => ltab_objectList(idx).schema_name,
                                               p_object_name => ltab_objectList(idx).object_name,
                                               p_object_type => ltab_objectList(idx).object_type,
                                               p_level       => p_level);
@@ -150,29 +140,29 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     BEGIN
         quilt_logger.log_detail('begin');
         BEGIN
-            FOR spiedObject IN (SELECT t.object_schema, t.object_name, t.object_type
-                                  FROM quilt_methods t
-                                 WHERE t.sessionid = l_sessionId
-                                   AND t.sid = l_SID) LOOP
-                IF objectExists(spiedObject.object_schema, spiedObject.object_name, spiedObject.object_type) THEN
-                    l_level := getPLSQLOptimizeLevel(spiedObject.object_schema, spiedObject.object_name, spiedObject.object_type);
+            FOR reportedObject IN (SELECT *
+                                     FROM quilt_methods t
+                                    WHERE t.sessionid = l_sessionId
+                                      AND t.sid = l_SID) LOOP
+                IF objectExists(reportedObject.owner, reportedObject.object_name) THEN
+                    l_level := getPLSQLOptimizeLevel(reportedObject.owner, reportedObject.object_name);
                     IF NOT l_level = p_level THEN
-                        setPLSQLOptimizeLevelImpl(p_schema_name => spiedObject.object_schema,
-                                                  p_object_name => spiedObject.object_name,
-                                                  p_object_type => spiedObject.object_type,
+                        setPLSQLOptimizeLevelImpl(p_owner       => reportedObject.owner,
+                                                  p_object_name => reportedObject.object_name,
+                                                  p_object_type => reportedObject.object_type,
                                                   p_level       => p_level);
                     ELSE
                         quilt_logger.log_detail('$1 $2.$3 already has level=$4',
-                                                spiedObject.object_type,
-                                                spiedObject.object_schema,
-                                                spiedObject.object_name,
+                                                reportedObject.object_type,
+                                                reportedObject.owner,
+                                                reportedObject.object_name,
                                                 l_level);
                     END IF;
                 ELSE
                     quilt_logger.log_detail('Object $1 $2.$3 does not exist.',
-                                            spiedObject.object_type,
-                                            spiedObject.object_schema,
-                                            spiedObject.object_name);
+                                            reportedObject.object_type,
+                                            reportedObject.owner,
+                                            reportedObject.object_name);
                 END IF;
             END LOOP;
         EXCEPTION
@@ -276,18 +266,18 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     ----------------------------------------------------------------------------
     FUNCTION getObject
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2
     ) RETURN quilt_object_type IS
         lobj_result quilt_object_type;
     BEGIN
-        quilt_logger.log_detail('begin: p_schema_name=$1, p_object_name=$2', p_schema_name, p_object_name);
+        quilt_logger.log_detail('begin: p_owner=$1, p_object_name=$2', p_owner, p_object_name);
         --
         BEGIN
             SELECT quilt_object_type(OWNER, object_name, object_type)
               INTO lobj_result
               FROM all_objects
-             WHERE OWNER LIKE '%' || upper(p_schema_name) || '%'
+             WHERE OWNER LIKE '%' || upper(p_owner) || '%'
                AND object_name LIKE '%' || upper(p_object_name) || '%';
         EXCEPTION
             WHEN no_data_found THEN
@@ -304,7 +294,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
     ----------------------------------------------------------------------------
     FUNCTION getObjectList
     (
-        p_schema_name IN VARCHAR2,
+        p_owner       IN VARCHAR2,
         p_object_name IN VARCHAR2,
         p_object_type IN VARCHAR2 DEFAULT NULL
     ) RETURN quilt_object_list_type IS
@@ -316,7 +306,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
           BULK COLLECT
           INTO ltab_result
           FROM all_objects
-         WHERE OWNER LIKE '%' || upper(p_schema_name) || '%'
+         WHERE OWNER LIKE '%' || upper(p_owner) || '%'
            AND object_name LIKE '%' || upper(p_object_name) || '%'
            AND object_type LIKE '%' || upper(p_object_type) || '%';
         --    
