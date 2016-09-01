@@ -1,4 +1,4 @@
-CREATE OR REPLACE TYPE quilt_report_process_type AS OBJECT
+CREATE OR REPLACE TYPE quilt_report_process_type  AS OBJECT
 (
     idx      NUMBER,
     tag_tn   VARCHAR2(4000),

@@ -1,0 +1,61 @@
+CREATE OR REPLACE PACKAGE ut_quilt_integer_stack AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_Integer_Stack';
+
+    PROCEDURE pushPushesPopPops(D VARCHAR2 := 'push pushes, pop posp - stack works');
+    PROCEDURE popAsProcedure(D VARCHAR2 := 'pop has procedure overload');
+    PROCEDURE popFromEmptyThrows(D VARCHAR2 := 'pop from empty throws');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_integer_stack AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE pushPushesPopPops(D VARCHAR2) IS
+        l_stack quilt_integer_stack := quilt_integer_stack();
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        pete_assert.eq(1, l_stack.isEmtpy);
+        l_stack.push(1);
+        pete_assert.eq(1, l_stack.pop);
+        pete_assert.eq(1, l_stack.isEmtpy);
+        --
+        l_stack.push(2);
+        pete_assert.eq(2, l_stack.pop);
+        l_stack.push(3);
+        pete_assert.eq(3, l_stack.pop);
+        pete_assert.eq(1, l_stack.isEmtpy);
+        --
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE popAsProcedure(D VARCHAR2) IS
+        l_stack quilt_integer_stack := quilt_integer_stack();
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        l_stack.push(1);
+        l_stack.pop;
+        pete_assert.eq(1, l_stack.isEmtpy);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE popFromEmptyThrows(D VARCHAR2) IS
+        l_stack  quilt_integer_stack := quilt_integer_stack();
+        l_thrown BOOLEAN := FALSE;
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        BEGIN
+            l_stack.pop;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        --
+        pete_assert.this(l_thrown, 'method should have thrown.');
+    END;
+
+END;
+/

@@ -16,6 +16,9 @@ prompt .. Creating package QUILT
 prompt .. Creating package QUILT_CODECOVERAGE
 @@quilt_codecoverage.pks
 
+prompt .. Create pacakge QUILT_PARSER
+@@quilt_parser.pks
+
 prompt .. Creating package body QUILT_UTIL
 @@quilt_util.pkb
 
@@ -30,3 +33,6 @@ prompt .. Creating package body QUILT
 
 prompt .. Creating package body QUILT_CODECOVERAGE
 @@quilt_codecoverage.pkb
+
+prompt .. Create pacakge body QUILT_PARSER
+@@quilt_parser.pkb

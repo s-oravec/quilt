@@ -1,0 +1,161 @@
+CREATE OR REPLACE PACKAGE ut_quilt_lexer AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_Lexer';
+
+    PROCEDURE initializeWorksWithEmpty(D VARCHAR2 := 'initialize works with empty');
+    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2 := 'initialize works with non empty');
+
+    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2 := 'currentItem and consume works');
+
+    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2 := 'rollback without takeSnapshot throws');
+    PROCEDURE commitWOSnapshotThrows(D VARCHAR2 := 'commit without takeSnapshot throws');
+    PROCEDURE commitAfterSnapWorks(D VARCHAR2 := 'commit after takeSnapshot works');
+    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2 := 'rollback after takeSnapshot works');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE initializeWorksWithEmpty(D VARCHAR2) IS
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text();
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        pete_assert.is_null(quilt_lexer.currentItem);
+        pete_assert.eq(1, quilt_lexer.getIndex);
+        pete_assert.this(quilt_lexer.eof);
+        pete_assert.is_null(quilt_lexer.peek(1));
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2) IS
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        pete_assert.eq('f', quilt_lexer.currentItem);
+        pete_assert.this(NOT quilt_lexer.eof);
+        pete_assert.eq('o', quilt_lexer.peek(1));
+        pete_assert.eq('o', quilt_lexer.peek(2));
+        pete_assert.eq(chr(10), quilt_lexer.peek(3));
+        pete_assert.eq('b', quilt_lexer.peek(4));
+        pete_assert.eq('a', quilt_lexer.peek(5));
+        pete_assert.eq('r', quilt_lexer.peek(6));
+        pete_assert.eq(chr(10), quilt_lexer.peek(7));
+        pete_assert.eq('b', quilt_lexer.peek(8));
+        pete_assert.eq('a', quilt_lexer.peek(9));
+        pete_assert.eq('z', quilt_lexer.peek(10));
+        pete_assert.is_null(quilt_lexer.peek(11));
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2) IS
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        pete_assert.eq('f', quilt_lexer.currentItem);
+        pete_assert.eq(1, quilt_lexer.getIndex);
+        quilt_lexer.consume;
+        pete_assert.eq(2, quilt_lexer.getIndex);
+        pete_assert.eq('o', quilt_lexer.currentItem);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2) IS
+        l_thrown      BOOLEAN := FALSE;
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        BEGIN
+            quilt_lexer.rollbackSnapshot;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        --
+        pete_assert.this(l_thrown, 'quilt_lexer.rollbackSnapshot should have thrown.');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE commitWOSnapshotThrows(D VARCHAR2) IS
+        l_thrown      BOOLEAN := FALSE;
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        BEGIN
+            quilt_lexer.commitSnapshot;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        --
+        pete_assert.this(l_thrown, 'quilt_lexer.commitSnapshot should have thrown.');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE commitAfterSnapWorks(D VARCHAR2) IS
+        l_thrown      BOOLEAN := FALSE;
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        quilt_lexer.takeSnapshot;
+        quilt_lexer.consume;
+        quilt_lexer.commitSnapshot;
+        -- consecutive rollback throws as stack is empty
+        BEGIN
+            quilt_lexer.rollbackSnapshot;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        --
+        pete_assert.this(l_thrown, 'quilt_lexer.rollbackSnapshot should have thrown.');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2) IS
+        l_thrown      BOOLEAN := FALSE;
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_indexBefore PLS_INTEGER;
+    BEGIN
+        pete.set_method_description(D);
+        -- prepare
+        quilt_lexer.initialize(p_source_lines => l_sourceLines);
+        --
+        quilt_lexer.takeSnapshot;
+        l_indexBefore := quilt_lexer.getIndex;
+        quilt_lexer.consume;
+        quilt_lexer.consume;
+        quilt_lexer.rollbackSnapshot;
+        -- indexe is restored to before take snapshot
+        pete_assert.eq(l_indexBefore, quilt_lexer.getIndex);
+        -- consecutive rollback throws as stack is empty
+        BEGIN
+            quilt_lexer.commitSnapshot;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        --
+        pete_assert.this(l_thrown, 'quilt_lexer.commitSnapshot should have thrown.');
+    END;
+
+END;
+/

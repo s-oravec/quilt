@@ -1,15 +1,15 @@
-CREATE OR REPLACE PACKAGE ut_quilt_logger AS
+CREATE OR REPLACE PACKAGE ut_quilt_parser AS
 
-    Description CONSTANT pete_types.typ_description := 'quilt_Logger';
+   Description CONSTANT pete_types.typ_description := 'quilt_Parser';
 
-    PROCEDURE logDetailWorks(D VARCHAR2 := 'log detail works');
+    PROCEDURE funcsAndProcsAreFound(D VARCHAR2 := 'parser finds all simple functions and procedures and their names');
 
 END;
 /
-CREATE OR REPLACE PACKAGE BODY ut_quilt_logger AS
+CREATE OR REPLACE PACKAGE BODY ut_quilt_parser AS
 
     ----------------------------------------------------------------------------
-    PROCEDURE logDetailWorks(D VARCHAR2) IS
+    PROCEDURE funcsAndProcsAreFound(D VARCHAR2) IS
         l_guid   varchar2(32);
         lrec_log quilt_log%rowtype;
     BEGIN
@@ -29,3 +29,4 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_logger AS
 
 END;
 /
+
