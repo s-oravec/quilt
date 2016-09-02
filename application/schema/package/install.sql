@@ -11,14 +11,14 @@ prompt .. Creating package QUILT_LOGGER
 prompt .. Creating package QUILT_CORE
 @@quilt_core.pks
 
-prompt .. Creating package QUILT_METHODSCTRL
-@@quilt_methodsctrl.pks
+prompt .. Creating package QUILT_REPORTED_OBJECTS
+@@quilt_reported_objects.pks
 
 prompt .. Creating package QUILT
 @@quilt.pks
 
-prompt .. Creating package QUILT_CODECOVERAGE
-@@quilt_codecoverage.pks
+prompt .. Creating package QUILT_COVERAGE
+@@quilt_coverage.pks
 
 prompt .. Createing pacakge QUILT_LEXER
 @@quilt_lexer.pks
@@ -36,11 +36,11 @@ prompt .. Creating package body QUILT_CORE
 prompt .. Creating package body QUILT
 @@quilt.pkb
 
-prompt .. Creating package body QUILT_CODECOVERAGE
-@@quilt_codecoverage.pkb
+prompt .. Creating package body QUILT_COVERAGE
+@@quilt_coverage.pkb
 
 prompt .. Create pacakge body QUILT_LEXER
 @@quilt_lexer.pkb
 
-prompt .. Creating package body QUILT_METHODSCTRL
-@@quilt_methodsctrl.pkb
+prompt .. Creating package body QUILT_REPORTED_OBJECTS
+@@quilt_reported_objects.pkb

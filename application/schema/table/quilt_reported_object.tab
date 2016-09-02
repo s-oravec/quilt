@@ -1,5 +1,4 @@
--- TODO: rename to quilt_ReportedObject
-CREATE TABLE quilt_methods
+CREATE TABLE quilt_reported_object
   (
     sessionid     NUMBER NOT NULL,
     sid           NUMBER NOT NULL,
@@ -7,4 +6,4 @@ CREATE TABLE quilt_methods
     object_name   VARCHAR2 (128 BYTE) NOT NULL,
     object_type   VARCHAR2 (128 BYTE) NOT NULL
   );
-ALTER TABLE quilt_methods ADD CONSTRAINT quilt_methods_sssoo_uk UNIQUE ( sessionid , sid , owner , object_name ) ;
+ALTER TABLE quilt_reported_object ADD CONSTRAINT quilt_reported_object_uk1 UNIQUE ( sessionid , sid , owner , object_name ) ;

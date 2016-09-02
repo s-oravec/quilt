@@ -45,14 +45,20 @@ prompt .. Creating type QUILT_MATCHWHITESPACE
 prompt .. Creating type QUILT_MATCHWORD
 @@quilt_matchword.tps
 
+prompt .. Creating type QUILT_LCOV_LINES
+@@quilt_lcov_lines.tps
+
 prompt .. Creating type QUILT_OBJECT_TYPE
 @@quilt_object_type.tps
 
 prompt .. Creating type QUILT_OBJECT_LIST_TYPE
 @@quilt_object_list_type.tps
 
-prompt .. Creating type QUILT_REPORT_TYPE
-@@quilt_report_type.tps
+prompt .. Creating type QUILT_REPORT_ITEM
+@@quilt_report_item.tps
+
+prompt .. Creating type QUILT_REPORT
+@@quilt_report.tps
 
 prompt .. Creating type QUILT_REPORT_PROCESS_TYPE
 @@quilt_report_process_type.tps

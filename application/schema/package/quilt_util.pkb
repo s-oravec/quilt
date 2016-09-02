@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         quilt_logger.log_detail('begin');
         BEGIN
             FOR reportedObject IN (SELECT *
-                                     FROM quilt_methods t
+                                     FROM quilt_reported_object t
                                     WHERE t.sessionid = l_sessionId
                                       AND t.sid = l_SID) LOOP
                 IF objectExists(reportedObject.owner, reportedObject.object_name) THEN

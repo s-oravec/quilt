@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
+CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
 
     /** CURSOR data report */
     CURSOR rcu_report
@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
              AND u.unit_number = d.unit_number
              AND u.unit_type != 'ANONYMOUS BLOCK')
         SELECT s.owner, s.name, s.type, s.line, s.text, p.runid, p.unit_number, p.total_occur, p.total_time
-          FROM all_source s, plsql P, quilt_methods q
+          FROM all_source s, plsql P, quilt_reported_object q
          WHERE s.owner LIKE q.owner
            AND s.name LIKE q.object_name
            AND s.type = nvl(q.object_type, 'PACKAGE BODY')
@@ -42,33 +42,43 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
            AND s.LINE = p.line(+)
          ORDER BY s.OWNER, s.name, s.type, s.line;
 
-    /** CURSOR total rows */
-    CURSOR rcu_total
+    ----------------------------------------------------------------------------
+    FUNCTION lines_found
     (
         p_runId    NUMBER,
         p_unitName VARCHAR2,
         p_owner    VARCHAR2,
         p_unitType VARCHAR2
-    ) IS
-        SELECT Count(1) Cnt
+    ) RETURN PLS_INTEGER IS
+        l_Result PLS_INTEGER;
+    BEGIN
+        -- TODO: filter only for QUILT_METHODS
+        SELECT Count(1)
+          INTO l_Result
           FROM plsql_profiler_data D, plsql_profiler_units u
          WHERE d.runid = p_runId
            AND u.runid = d.runid
            AND u.unit_number = d.unit_number
            AND u.unit_name = upper(p_unitName)
            AND u.unit_owner = upper(p_owner)
-              --
+           --
            AND u.unit_type = upper(p_unitType);
+           --
+        RETURN l_Result;
+    END;
 
-    /** CURSOR exec rows */
-    CURSOR rcu_exec
+    ----------------------------------------------------------------------------
+    FUNCTION lines_hit
     (
         p_runId    NUMBER,
         p_unitName VARCHAR2,
         p_owner    VARCHAR2,
         p_unitType VARCHAR2
-    ) IS
-        SELECT Count(1) Cnt
+    ) RETURN PLS_INTEGER IS
+        l_Result PLS_INTEGER;
+    BEGIN
+        SELECT Count(1)
+          INTO l_Result
           FROM plsql_profiler_data D, plsql_profiler_units u
          WHERE d.runid = p_runId
            AND u.runid = d.runid
@@ -78,9 +88,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
               --
            AND u.unit_type = upper(p_unitType)
            AND d.total_occur > 0;
+        --
+        RETURN l_Result;
+        --
+    END;
 
     ----------------------------------------------------------------------------    
-    PROCEDURE insert_Row
+    PROCEDURE insert_report_line
     (
         p_sessionId IN NUMBER,
         p_sid       IN NUMBER,
@@ -90,12 +104,12 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     ) IS
     BEGIN
         --
-        INSERT INTO quilt_report (sessionid, SID, runid, idx, Line) VALUES (p_sessionId, p_sid, p_runId, p_idx, p_line);
+        INSERT INTO quilt_report_line (sessionid, SID, runid, idx, Line) VALUES (p_sessionId, p_sid, p_runId, p_idx, p_line);
         p_idx := p_idx + 1;
-    END insert_Row;
+    END insert_report_line;
 
-    /** Save object data to the table of reports */
-    PROCEDURE save_ObjectReport
+    ----------------------------------------------------------------------------
+    PROCEDURE save_report
     (
         p_sessionId IN NUMBER,
         p_sid       IN NUMBER,
@@ -104,13 +118,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     ) IS
         l_idx NUMBER := p_object.idx;
         --
-        PROCEDURE lproc_insRow
-        (
-            p_idx  IN OUT NUMBER,
-            p_line IN VARCHAR2
-        ) IS
+        PROCEDURE lproc_insRow(p_line IN VARCHAR2) IS
         BEGIN
-            insert_row(p_sessionId, p_SID, p_runId, p_idx, p_line);
+            insert_report_line(p_sessionId, p_SID, p_runId, l_idx, p_line);
             quilt_logger.log_detail(p_line);
         END;
         --
@@ -118,135 +128,56 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
         quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, p_runId=$3', p_sessionId, p_SID, p_runId);
         quilt_logger.log_detail('idx', l_idx);
         -- TN
-        lproc_insRow(l_idx, quilt_const.TAG_TN || p_object.tag_tn);
+        lproc_insRow(quilt_const.TAG_TN || p_object.tag_tn);
         -- SF
-        lproc_insRow(l_idx, quilt_const.TAG_SF || p_object.tag_sf);
+        lproc_insRow(quilt_const.TAG_SF || p_object.tag_sf);
         -- FN list
         IF p_object.tag_fn IS NOT NULL AND p_object.tag_fn.count > 0 THEN
             FOR i IN p_object.tag_fn.first .. p_object.tag_fn.last LOOP
-                lproc_insRow(l_idx, quilt_const.TAG_FN || p_object.tag_fn(i));
+                lproc_insRow(quilt_const.TAG_FN || p_object.tag_fn(i));
             END LOOP;
         END IF;
         -- FNDA list
         IF p_object.tag_fnda IS NOT NULL AND p_object.tag_fnda.count > 0 THEN
             FOR i IN p_object.tag_fnda.first .. p_object.tag_fnda.last LOOP
-                lproc_insRow(l_idx, quilt_const.TAG_FNDA || p_object.tag_fnda(i));
+                lproc_insRow(quilt_const.TAG_FNDA || p_object.tag_fnda(i));
             END LOOP;
         END IF;
         -- FNF
-        lproc_insRow(l_idx, quilt_const.TAG_FNF || p_object.tag_fnf);
+        lproc_insRow(quilt_const.TAG_FNF || p_object.tag_fnf);
         -- FNH
-        lproc_insRow(l_idx, quilt_const.TAG_FNH || p_object.tag_fnh);
+        lproc_insRow(quilt_const.TAG_FNH || p_object.tag_fnh);
         -- BRDA list
         IF p_object.tag_brda IS NOT NULL AND p_object.tag_brda.count > 0 THEN
             FOR i IN p_object.tag_brda.first .. p_object.tag_brda.last LOOP
-                lproc_insRow(l_idx, quilt_const.TAG_BRDA || p_object.tag_brda(i));
+                lproc_insRow(quilt_const.TAG_BRDA || p_object.tag_brda(i));
             END LOOP;
         END IF;
         -- BRF
-        lproc_insRow(l_idx, quilt_const.TAG_BRF || p_object.tag_brf);
+        lproc_insRow(quilt_const.TAG_BRF || p_object.tag_brf);
         -- BFH
-        lproc_insRow(l_idx, quilt_const.TAG_BRH || p_object.tag_brh);
+        lproc_insRow(quilt_const.TAG_BRH || p_object.tag_brh);
         -- DA list
         IF p_object.tag_da IS NOT NULL AND p_object.tag_da.count > 0 THEN
             FOR i IN p_object.tag_da.first .. p_object.tag_da.last LOOP
-                lproc_insRow(l_idx, quilt_const.TAG_DA || p_object.tag_da(i));
+                lproc_insRow(quilt_const.TAG_DA || p_object.tag_da(i));
             END LOOP;
         END IF;
         -- LH
-        lproc_insRow(l_idx, quilt_const.TAG_LH || p_object.tag_lh);
+        lproc_insRow(quilt_const.TAG_LH || p_object.tag_lh);
         -- LF
-        lproc_insRow(l_idx, quilt_const.TAG_LF || p_object.tag_lf);
+        lproc_insRow(quilt_const.TAG_LF || p_object.tag_lf);
         -- EOR
-        lproc_insRow(l_idx, quilt_const.TAG_EOR);
+        lproc_insRow(quilt_const.TAG_EOR);
     
         p_object.idx := l_idx;
         COMMIT;
-    END save_ObjectReport;
-
-    ----------------------------------------------------------------------------
-    FUNCTION get_SpyingObjects
-    (
-        p_sessionId IN NUMBER DEFAULT NULL,
-        p_sid       IN NUMBER DEFAULT NULL
-    ) RETURN SYS_REFCURSOR IS
-        l_sessionId NUMBER := nvl(p_sessionId, quilt_core.get_sessionId);
-        l_SID       NUMBER := nvl(p_sid, quilt_core.get_SID);
-        lrcu_result SYS_REFCURSOR;
-    BEGIN
-        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
-        --
-        OPEN lrcu_result FOR
-            SELECT OWNER, object_name, object_type
-              FROM quilt_methods
-             WHERE SID = l_SID
-               AND sessionid = l_sessionId;
-        --
-        RETURN lrcu_result;
-        --
-    END get_SpyingObjects;
+    END save_report;
 
     ----------------------------------------------------------------------------  
-    PROCEDURE set_SpyingObject
-    (
-        p_schema      IN VARCHAR2,
-        p_object      IN VARCHAR2,
-        p_object_type IN VARCHAR2 DEFAULT NULL,
-        p_sessionId   IN NUMBER DEFAULT NULL,
-        p_sid         IN NUMBER DEFAULT NULL
-    ) IS
-    
-        l_sessionId quilt_methods.sessionid%Type := nvl(p_sessionId, quilt_core.get_SESSIONID);
-        l_SID       quilt_methods.sid%Type := nvl(p_sid, quilt_core.get_SID);
-        ltab_objs   quilt_object_list_type := quilt_object_list_type();
-    BEGIN
-        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
-        --
-        ltab_objs := quilt_util.getObjectList(p_schema, p_object);
-        --
-        FOR i IN (SELECT schema_name, object_name, object_type FROM TABLE(ltab_objs)) LOOP
-            BEGIN
-                INSERT INTO quilt_methods
-                    (sessionid, SID, OWNER, object_name, object_type)
-                VALUES
-                    (l_sessionId, l_SID, i.schema_name, i.object_name, i.object_type);
-            EXCEPTION
-                WHEN OTHERS THEN
-                    -- todo specificka 
-                    NULL;
-            END;
-        END LOOP;
-        --
-        COMMIT;
-        --
-        quilt_logger.log_detail('end');
-        --
-    END set_SpyingObject;
 
     ----------------------------------------------------------------------------
-    PROCEDURE del_SpyingObjectList
-    (
-        p_sessionId IN NUMBER DEFAULT NULL,
-        p_sid       IN NUMBER DEFAULT NULL
-    ) IS
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        l_sessionId NUMBER := nvl(p_sessionId, quilt_core.get_SESSIONID);
-        l_SID       NUMBER := nvl(p_sid, quilt_core.get_SID);
-    BEGIN
-        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, l_sessionId=$3, l_SID=$4', p_sessionId, p_SID, l_sessionId, l_SID);
-        --    
-        DELETE quilt_methods
-         WHERE SID = l_SID
-           AND sessionid = l_sessionId;
-        --
-        COMMIT;
-        --
-        quilt_logger.log_detail('end');
-        --
-    END del_SpyingObjectList;
-
-    ----------------------------------------------------------------------------
-    PROCEDURE ProcessingCodeCoverage
+    PROCEDURE process_profiler_run
     (
         p_sessionId IN NUMBER DEFAULT NULL,
         p_sid       IN NUMBER DEFAULT NULL,
@@ -254,8 +185,6 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
     ) IS
     
         lrec_report rcu_report%ROWTYPE;
-        lrec_total  rcu_total%ROWTYPE;
-        lrec_exec   rcu_exec%ROWTYPE;
         --
         --lint_idx       NUMBER := 1;
         lbol_first_run BOOLEAN := FALSE;
@@ -278,7 +207,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                                 lint_runid);
         --
         --uklid pred novym reportem pro stejne RUNID
-        DELETE quilt_report
+        DELETE quilt_report_line
          WHERE sessionid = l_sessionId
            AND SID = l_SID
            AND runid = lint_runid;
@@ -297,7 +226,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                     quilt_logger.log_detail('vice souboru');
                     -- vice souboru, provedeme zapis dat z typu do tabulky
                     quilt_logger.log_detail('idx_1s', lobj_report.idx);
-                    save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
+                    save_report(l_sessionId, l_SID, lint_runid, lobj_report);
                     --
                     quilt_logger.log_detail('idx_1e', lobj_report.idx);
                     lobj_report := quilt_report_process_type(lobj_report.idx, quilt_const.TAG_EOR);
@@ -307,10 +236,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                     lbol_first_run := TRUE;
                 END IF;
                 --
-                lobj_report.tag_da   := quilt_report_type();
-                lobj_report.tag_fn   := quilt_report_type();
-                lobj_report.tag_fnda := quilt_report_type();
-                lobj_report.tag_brda := quilt_report_type();
+                lobj_report.tag_da   := quilt_lcov_lines();
+                lobj_report.tag_fn   := quilt_lcov_lines();
+                lobj_report.tag_fnda := quilt_lcov_lines();
+                lobj_report.tag_brda := quilt_lcov_lines();
                 lobj_report.tag_fnf  := 0;
                 lobj_report.tag_brf  := 0;
                 -- TN
@@ -319,19 +248,16 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
                 lobj_report.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
                 quilt_logger.log_detail(': ' || lint_runid || ',' || lrec_report.runid || ',' || lrec_report.name || ',' ||
                                         lrec_report.owner || ',' || lrec_report.type);
-            
-                OPEN rcu_total(lint_runid, lrec_report.name, lrec_report.owner, lrec_report.type);
-                OPEN rcu_exec(lint_runid, lrec_report.name, lrec_report.owner, lrec_report.type);
-                FETCH rcu_total
-                    INTO lrec_total;
-                FETCH rcu_exec
-                    INTO lrec_exec;
-                CLOSE rcu_total;
-                CLOSE rcu_exec;
-                -- LH
-                lobj_report.tag_lh := lrec_exec.cnt;
-                -- LF
-                lobj_report.tag_lf := lrec_total.cnt;
+                -- LH - lines hit
+                lobj_report.tag_lh := lines_hit(p_runId    => lint_runid,
+                                                p_unitName => lrec_report.name,
+                                                p_owner    => lrec_report.owner,
+                                                p_unitType => lrec_report.type);
+                -- LF - lines found
+                lobj_report.tag_lf := lines_found(p_runId    => lint_runid,
+                                                  p_unitName => lrec_report.name,
+                                                  p_owner    => lrec_report.owner,
+                                                  p_unitType => lrec_report.type);
                 -- BR
                 lint_branch_cnt := 0;
             END IF;
@@ -375,11 +301,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             --
         END LOOP;
         IF lobj_report.tag_da IS NOT NULL THEN
-            quilt_logger.log_detail(': ' || lobj_report.tag_da.count);
-        
+            quilt_logger.log_detail('DA count:' || lobj_report.tag_da.count);
             -- zapis
-            quilt_logger.log_detail(': zapis');
-            save_ObjectReport(l_sessionId, l_SID, lint_runid, lobj_report);
+            quilt_logger.log_detail('zapis');
+            save_report(l_sessionId, l_SID, lint_runid, lobj_report);
         ELSE
             quilt_logger.log_detail(': lobj_report.tag_da is null!!!');
         END IF;
@@ -391,7 +316,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
             IF rcu_report%ISOPEN THEN
                 CLOSE rcu_report;
             END IF;
-    END ProcessingCodeCoverage;
+    END process_profiler_run;
     /*
            A tracefile is made up of several human-readable lines of text, divided
            into sections. If available, a tracefile begins with the testname which
@@ -453,5 +378,5 @@ CREATE OR REPLACE PACKAGE BODY quilt_codecoverage IS
              end_of_record
     */
 
-END quilt_codecoverage;
+END quilt_coverage;
 /

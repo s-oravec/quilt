@@ -10,8 +10,8 @@ DROP PACKAGE quilt_lexer;
 prompt .. Dropping package QUILT_LOGGER
 DROP PACKAGE quilt_logger;
 
-prompt .. Dropping package QUILT_METHODSCTRL
-DROP PACKAGE quilt_methodsctrl;
+prompt .. Dropping package QUILT_REPORTED_OBJECTS
+DROP PACKAGE quilt_reported_objects;
 
 prompt .. Dropping package QUILT_CORE
 DROP PACKAGE quilt_core;
@@ -19,5 +19,5 @@ DROP PACKAGE quilt_core;
 prompt .. Dropping package QUILT
 DROP PACKAGE quilt;
 
-prompt .. Dropping package QUILT_CODECOVERAGE
-DROP PACKAGE quilt_codecoverage;
+prompt .. Dropping package QUILT_COVERAGE
+DROP PACKAGE quilt_coverage;
