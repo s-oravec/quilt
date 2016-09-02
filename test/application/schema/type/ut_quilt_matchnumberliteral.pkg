@@ -1,0 +1,179 @@
+CREATE OR REPLACE PACKAGE ut_quilt_MatchNumberLiteral AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_MatchNumberLiteral';
+
+    PROCEDURE match(D VARCHAR2 := 'matches any number literal');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchNumberLiteral AS
+
+    g_numberLiterals quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('1 ',
+                                                                                '+2 ',
+                                                                                '-3 ',
+                                                                                '1. ',
+                                                                                '+2. ',
+                                                                                '-3. ',
+                                                                                '1.1 ',
+                                                                                '+2.2 ',
+                                                                                '-3.3 ',
+                                                                                '.1 ',
+                                                                                '-.1 ',
+                                                                                '+.1 ',
+                                                                                '1e4 ',
+                                                                                '+2e4 ',
+                                                                                '-3e4 ',
+                                                                                '1.e4 ',
+                                                                                '+2.e4 ',
+                                                                                '-3.e4 ',
+                                                                                '1.1e4 ',
+                                                                                '+2.2e4 ',
+                                                                                '-3.3 ',
+                                                                                '.1e4 ',
+                                                                                '-.1e4 ',
+                                                                                '+.1e4 ',
+                                                                                '1e+4 ',
+                                                                                '+2e+4 ',
+                                                                                '-3e+4 ',
+                                                                                '1.e+4 ',
+                                                                                '+2.e+4 ',
+                                                                                '-3.e+4 ',
+                                                                                '1.1e+4 ',
+                                                                                '+2.2e+4 ',
+                                                                                '-3.3 ',
+                                                                                '.1e+4 ',
+                                                                                '-.1e+4 ',
+                                                                                '+.1e+4 ',
+                                                                                '1e-4 ',
+                                                                                '+2e-4 ',
+                                                                                '-3e-4 ',
+                                                                                '1.e-4 ',
+                                                                                '+2.e-4 ',
+                                                                                '-3.e-4 ',
+                                                                                '1.1e-4 ',
+                                                                                '+2.2e-4 ',
+                                                                                '-3.3 ',
+                                                                                '.1e-4 ',
+                                                                                '-.1e-4 ',
+                                                                                '+.1e-4 ',
+                                                                                '1d ',
+                                                                                '+2d ',
+                                                                                '-3d ',
+                                                                                '1.d ',
+                                                                                '+2.d ',
+                                                                                '-3.d ',
+                                                                                '1.1d ',
+                                                                                '+2.2d ',
+                                                                                '-3.3d ',
+                                                                                '.1d ',
+                                                                                '-.1d ',
+                                                                                '+.1d ',
+                                                                                '1e4 ',
+                                                                                '+2e4d ',
+                                                                                '-3e4d ',
+                                                                                '1.e4d ',
+                                                                                '+2.e4d ',
+                                                                                '-3.e4d ',
+                                                                                '1.1e4d ',
+                                                                                '+2.2e4d ',
+                                                                                '-3.3d ',
+                                                                                '.1e4d ',
+                                                                                '-.1e4d ',
+                                                                                '+.1e4d ',
+                                                                                '1e+4d ',
+                                                                                '+2e+4d ',
+                                                                                '-3e+4d ',
+                                                                                '1.e+4d ',
+                                                                                '+2.e+4d ',
+                                                                                '-3.e+4d ',
+                                                                                '1.1e+4d ',
+                                                                                '+2.2e+4d ',
+                                                                                '-3.3d ',
+                                                                                '.1e+4d ',
+                                                                                '-.1e+4d ',
+                                                                                '+.1e+4d ',
+                                                                                '1e-4d ',
+                                                                                '+2e-4d ',
+                                                                                '-3e-4d ',
+                                                                                '1.e-4d ',
+                                                                                '+2.e-4d ',
+                                                                                '-3.e-4d ',
+                                                                                '1.1e-4d ',
+                                                                                '+2.2e-4d ',
+                                                                                '-3.3d ',
+                                                                                '.1e-4d ',
+                                                                                '-.1e-4d ',
+                                                                                '+.1e-4d ',
+                                                                                '1f ',
+                                                                                '+2f ',
+                                                                                '-3f ',
+                                                                                '1.f ',
+                                                                                '+2.f ',
+                                                                                '-3.f ',
+                                                                                '1.1f ',
+                                                                                '+2.2f ',
+                                                                                '-3.3f ',
+                                                                                '.1f ',
+                                                                                '-.1f ',
+                                                                                '+.1f ',
+                                                                                '1e4 ',
+                                                                                '+2e4f ',
+                                                                                '-3e4f ',
+                                                                                '1.e4f ',
+                                                                                '+2.e4f ',
+                                                                                '-3.e4f ',
+                                                                                '1.1e4f ',
+                                                                                '+2.2e4f ',
+                                                                                '-3.3f ',
+                                                                                '.1e4f ',
+                                                                                '-.1e4f ',
+                                                                                '+.1e4f ',
+                                                                                '1e+4f ',
+                                                                                '+2e+4f ',
+                                                                                '-3e+4f ',
+                                                                                '1.e+4f ',
+                                                                                '+2.e+4f ',
+                                                                                '-3.e+4f ',
+                                                                                '1.1e+4f ',
+                                                                                '+2.2e+4f ',
+                                                                                '-3.3f ',
+                                                                                '.1e+4f ',
+                                                                                '-.1e+4f ',
+                                                                                '+.1e+4f ',
+                                                                                '1e-4f ',
+                                                                                '+2e-4f ',
+                                                                                '-3e-4f ',
+                                                                                '1.e-4f ',
+                                                                                '+2.e-4f ',
+                                                                                '-3.e-4f ',
+                                                                                '1.1e-4f ',
+                                                                                '+2.2e-4f ',
+                                                                                '-3.3f ',
+                                                                                '.1e-4f ',
+                                                                                '-.1e-4f ',
+                                                                                '+.1e-4f ');
+
+    ----------------------------------------------------------------------------
+    PROCEDURE match(D VARCHAR2) IS
+        l_match        quilt_MatchNumberLiteral := quilt_MatchNumberLiteral();
+        l_matchedToken quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(g_numberLiterals);
+        FOR lineIdx IN 1 .. g_numberLiterals.count LOOP
+            l_matchedToken := l_match.isMatch;
+            -- token has been matched
+            pete_assert.this(l_matchedToken IS NOT NULL, 'literal ' || g_numberLiterals(lineIdx) || ' has not been matched');
+            -- it is number literal token
+            pete_assert.eq(quilt_lexer.tk_NumberLiteral, l_matchedToken.token);
+            -- value matches the source line
+            pete_assert.eq(substr(g_numberLiterals(lineIdx), 1, length(g_numberLiterals(lineIdx)) - 1), l_matchedToken.text);
+            -- consume space serving as delimiter in source
+            quilt_lexer.consume;
+        END LOOP;
+        -- only EOF is left
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+END;
+/

@@ -30,7 +30,7 @@ CREATE OR REPLACE Type BODY quilt_matchword AS
                 quilt_lexer.consume;
             END LOOP;
             --
-            l_Text := quilt_lexer.currentItem;
+            l_Text := l_text || quilt_lexer.currentItem;
             quilt_lexer.consume;
             --
             RETURN NEW quilt_token(quilt_lexer.tk_Word, l_Text);

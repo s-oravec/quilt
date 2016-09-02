@@ -1,0 +1,25 @@
+CREATE OR REPLACE PACKAGE ut_quilt_MatchWhitespace AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_MatchWhitespace';
+
+    PROCEDURE continuousAsSingle(D VARCHAR2 := 'continuous whitespace characters matched as single literal - on one line');
+    PROCEDURE continuousAsSingleOnMultiLines(D VARCHAR2 := 'continuous whitespace characters matched as single literal - on multiple lines');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchWhitespace AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE continuousAsSingle(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE continuousAsSingleOnMultiLines(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+    END;
+
+END;
+/

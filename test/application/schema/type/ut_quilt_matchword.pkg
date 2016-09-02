@@ -1,0 +1,64 @@
+CREATE OR REPLACE PACKAGE ut_quilt_MatchWord AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_MatchWord';
+
+    PROCEDURE delimited(D VARCHAR2 := 'matches word delimited by special characters, whitespace or EOF');
+    PROCEDURE enquoted(D VARCHAR2 := 'matches word enquoted by "');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchWord AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE delimited(D VARCHAR2) IS
+        l_Text            VARCHAR2(255) := 'delimitedBySpecial.delimitedByWhiteSpace delimitedByEOF';
+        l_sourceLines     quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
+        l_match           quilt_MatchWord := quilt_MatchWord();
+        l_matchWhiteSpace quilt_MatchWhiteSpace := quilt_MatchWhiteSpace();
+        l_matchDot        quilt_MatchKeyword := quilt_MatchKeyword(quilt_lexer.tk_Dot, quilt_lexer.tk_Dot);
+        l_matchedToken    quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq('delimitedBySpecial', l_matchedToken.text);
+        --
+        l_matchedToken := l_matchDot.isMatch;
+        pete_assert.eq(quilt_lexer.tk_Dot, l_matchedToken.token);
+        pete_assert.eq('.', l_matchedToken.text);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq('delimitedByWhiteSpace', l_matchedToken.text);
+        --
+        l_matchedToken := l_matchWhiteSpace.isMatch;
+        pete_assert.eq(quilt_lexer.tk_WhiteSpace, l_matchedToken.token);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq('delimitedByEOF', l_matchedToken.text);
+        --
+        pete_assert.this(quilt_lexer.eof);
+    END;
+    ----------------------------------------------------------------------------
+    PROCEDURE enquoted(D VARCHAR2 := 'matches word enquoted by "') IS
+        l_Text         VARCHAR2(255) := q'["w=o%r'd"]';
+        l_sourceLines  quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
+        l_match        quilt_MatchWord := quilt_MatchWord();
+        l_matchedToken quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        dbms_output.put_line(xmltype.createXml(l_matchedToken).getClobVal);
+        pete_assert.eq(quilt_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        --
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+END;
+/

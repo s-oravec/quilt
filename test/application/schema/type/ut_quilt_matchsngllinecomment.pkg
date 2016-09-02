@@ -1,0 +1,90 @@
+CREATE OR REPLACE PACKAGE ut_quilt_MatchSnglLineComment AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_MatchSingleLineComment';
+
+    PROCEDURE matchToTheEOL(D VARCHAR2 := 'matches until the end of line');
+    PROCEDURE matchAsOne(D VARCHAR2 := 'does not match again within other single line comment');
+    PROCEDURE notMatchWithinMultilineComment(D VARCHAR2 := 'does not match within multiline comment');
+    PROCEDURE notMatchWithinTextLiteral(D VARCHAR2 := 'does not match within text literal');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchSnglLineComment AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE matchToTheEOL(D VARCHAR2) IS
+        l_Text            VARCHAR2(30) := '-- single line comment';
+        l_sourceLines     quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text || chr(10));
+        l_match           quilt_MatchSinglelineComment := quilt_MatchSinglelineComment();
+        l_matchWhiteSpace quilt_MatchWhiteSpace := quilt_MatchWhiteSpace();
+        l_matchedToken    quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_SinglelineComment, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        -- match chr(10) at the end of line
+        l_matchedToken := l_matchWhiteSpace.isMatch;
+        pete_assert.eq(quilt_lexer.tk_WhiteSpace, l_matchedToken.token);
+        -- EOF is what has left
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE matchAsOne(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := '-- single --line comment';
+        l_sourceLines  quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
+        l_match        quilt_MatchSinglelineComment := quilt_MatchSinglelineComment();
+        l_matchedToken quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_SinglelineComment, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        -- EOF is what has left
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE notMatchWithinMultilineComment(D VARCHAR2) IS
+        l_Text           VARCHAR2(30) := '/*' || chr(10) || '-- tradaa' || chr(10) || '*/';
+        l_sourceLines    quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('/*' || chr(10), '-- tradaa' || chr(10), '*/');
+        l_match          quilt_MatchSinglelineComment := quilt_MatchSinglelineComment();
+        l_matchMultiline quilt_MatchMultilineComment := quilt_MatchMultilineComment();
+        l_matchedToken   quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        -- try to match single line comment
+        l_matchedToken := l_match.isMatch;
+        pete_assert.this(l_matchedToken IS NULL);
+        -- confirm that it is matched as multiline comment
+        l_matchedToken := l_matchMultiline.isMatch;
+        pete_assert.eq(quilt_lexer.tk_MultilineComment, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE notMatchWithinTextLiteral(D VARCHAR2) IS
+        l_Text             VARCHAR2(255) := q'['some string with single line comment inside -- comment']';
+        l_sourceLines      quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
+        l_match            quilt_MatchSinglelineComment := quilt_MatchSinglelineComment();
+        l_matchTextLiteral quilt_MatchTextLiteral := quilt_MatchTextLiteral();
+        l_matchedToken     quilt_token;
+    BEGIN
+        pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.this(l_matchedToken IS NULL);
+        l_matchedToken := l_matchTextLiteral.isMatch;
+        pete_assert.eq(quilt_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        -- EOF is what has left
+        pete_assert.this(quilt_lexer.eof);
+    END;
+
+END;
+/
