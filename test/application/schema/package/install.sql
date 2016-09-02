@@ -6,3 +6,6 @@ prompt .. Creating test package UT_QUILT_METHODSCTRL
 
 prompt .. Creating test package UT_QUILT_UTIL
 @@ut_quilt_util.pkg
+
+prompt .. Creating test package UT_QUILT_LEXER
+@@ut_quilt_lexer.pkg

@@ -1,3 +1,4 @@
+rem spec
 prompt .. Creating package QUILT_CONST
 @@quilt_const.pks
 
@@ -10,15 +11,19 @@ prompt .. Creating package QUILT_LOGGER
 prompt .. Creating package QUILT_CORE
 @@quilt_core.pks
 
+prompt .. Creating package QUILT_METHODSCTRL
+@@quilt_methodsctrl.pks
+
 prompt .. Creating package QUILT
 @@quilt.pks
 
 prompt .. Creating package QUILT_CODECOVERAGE
 @@quilt_codecoverage.pks
 
-prompt .. Create pacakge QUILT_PARSER
-@@quilt_parser.pks
+prompt .. Createing pacakge QUILT_LEXER
+@@quilt_lexer.pks
 
+rem body
 prompt .. Creating package body QUILT_UTIL
 @@quilt_util.pkb
 
@@ -34,5 +39,8 @@ prompt .. Creating package body QUILT
 prompt .. Creating package body QUILT_CODECOVERAGE
 @@quilt_codecoverage.pkb
 
-prompt .. Create pacakge body QUILT_PARSER
-@@quilt_parser.pkb
+prompt .. Create pacakge body QUILT_LEXER
+@@quilt_lexer.pkb
+
+prompt .. Creating package body QUILT_METHODSCTRL
+@@quilt_methodsctrl.pkb

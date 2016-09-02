@@ -43,14 +43,21 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
     BEGIN
         g_matchers := quilt_matchers();
         --
+        -- single line comment
+        appendMatcher(NEW quilt_MatchSingleLineComment());
+        --
+        -- single line comment
+        appendMatcher(NEW quilt_MatchMultiLineComment());
+        --
         -- add special characters matchers    
         FOR idx IN 1 .. g_specialCharacterTokens.count LOOP
-            appendMatcher(NEW quilt_MatchKeyword(g_specialCharacterTokens(idx), g_specialCharacterTokens(idx)));
+            appendMatcher(NEW quilt_MatchKeyword(token => g_specialCharacterTokens(idx), stringToMatch => g_specialCharacterTokens(idx)));
         END LOOP;
         --
         -- add keyword matchers
         FOR idx IN 1 .. g_keywordTokens.count LOOP
-            appendMatcher(NEW quilt_MatchKeyword(g_keywordTokens(idx), g_keywordTokens(idx)));
+            appendMatcher(NEW
+                          quilt_MatchKeyword(token => g_keywordTokens(idx), stringToMatch => g_keywordTokens(idx), allowAsSubstring => 'N'));
         END LOOP;
         --
         -- add whitespace matcher
@@ -58,6 +65,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
         --
         -- add matcher for matching string literals
         appendMatcher(NEW quilt_MatchTextLiteral());
+        --
+        -- add matcher for matching number literals
+        appendMatcher(NEW quilt_MatchNumberLiteral());
         --
         -- add matcher for matching words
         appendMatcher(NEW quilt_MatchWord());
@@ -79,11 +89,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
         g_source          := '';
         --
         FOR lineIdx IN 1 .. g_sourceTextLines.count LOOP
-            IF lineIdx = 1 THEN
-                g_source := g_source || g_sourceTextLines(lineIdx);
-            ELSE
-                g_source := g_source || chr(10) || g_sourceTextLines(lineIdx);
-            END IF;
+            g_source := g_source || g_sourceTextLines(lineIdx);
         END LOOP;
         --
         initializeMatchers;
@@ -93,7 +99,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
     PROCEDURE initialize
     (
         p_owner all_source.owner%Type,
-        p_name  all_source.name%Type
+        p_name  all_source.name%Type,
+        p_type  all_source.type%Type
     ) IS
         l_sourceTextLines typ_source_text;
     BEGIN
@@ -104,11 +111,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
           FROM all_source
          WHERE OWNER = p_owner
            AND Name = p_name
-           AND Type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
-                        quilt_const.OBJ_TYPE_TYPE_BODY,
-                        quilt_const.OBJ_TYPE_PROCEDURE,
-                        quilt_const.OBJ_TYPE_FUNCTION,
-                        quilt_const.OBJ_TYPE_TRIGGER)
+           AND Type = p_type
          ORDER BY Line;
         --
         initialize(p_source_lines => l_sourceTextLines);
@@ -194,25 +197,26 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
     FUNCTION isSpecialCharacter(p_character IN VARCHAR2) RETURN BOOLEAN IS
     BEGIN
         -- TODO: fix this
-        RETURN p_character IN(tk_Dot,
-                              tk_Comma,
-                              tk_Semicolon,
-                              tk_Plus,
+        RETURN p_character IN(tk_Asterix,
                               tk_Colon,
-                              tk_Minus,
-                              tk_Asterix,
-                              tk_Slash,
-                              tk_Hash,
-                              tk_Underscore,
+                              tk_Comma,
                               tk_Dollar,
-                              tk_Percent,
-                              tk_Quote,
-                              tk_ExclamationMark,
+                              tk_Dot,
                               tk_Equals,
+                              tk_ExclamationMark,
                               tk_GreaterThan,
+                              tk_Hash,
                               tk_LessThan,
                               tk_LParenth,
-                              tk_RParenth);
+                              tk_Minus,
+                              tk_Percent,
+                              tk_Pipe,
+                              tk_Plus,
+                              tk_Quote,
+                              tk_RParenth,
+                              tk_Semicolon,
+                              tk_Slash,
+                              tk_Underscore);
     END;
 
     ----------------------------------------------------------------------------
@@ -249,6 +253,19 @@ CREATE OR REPLACE PACKAGE BODY quilt_lexer AS
         END IF;
     END;
 
+    ----------------------------------------------------------------------------
+    FUNCTION tokens RETURN quilt_tokens IS
+        l_Result quilt_tokens;
+    BEGIN
+        l_Result := quilt_tokens();
+        LOOP
+            l_Result.extend;
+            l_Result(l_Result.count) := quilt_lexer.nextToken;
+            EXIT WHEN l_Result(l_Result.count).token = quilt_lexer.tk_EOF;
+        END LOOP;
+        RETURN l_Result;
+    END;
+
 BEGIN
     g_specialCharacterTokens := typ_tableOfTokens(tk_Dot,
                                                   tk_Comma,
@@ -261,6 +278,7 @@ BEGIN
                                                   tk_Hash,
                                                   tk_Underscore,
                                                   tk_Dollar,
+                                                  tk_Pipe,
                                                   tk_Percent,
                                                   tk_Quote,
                                                   tk_ExclamationMark,

@@ -21,6 +21,19 @@ CREATE OR REPLACE Type BODY quilt_matchword AS
             --
             RETURN NEW quilt_token(quilt_lexer.tk_Word, l_Text);
             --
+        ELSIF quilt_lexer.currentItem = '"' THEN
+            l_Text := quilt_lexer.currentItem;
+            quilt_lexer.consume;
+            --
+            WHILE NOT quilt_lexer.eof AND quilt_lexer.currentItem != '"' LOOP
+                l_Text := l_Text || quilt_lexer.currentItem;
+                quilt_lexer.consume;
+            END LOOP;
+            --
+            l_Text := quilt_lexer.currentItem;
+            quilt_lexer.consume;
+            --
+            RETURN NEW quilt_token(quilt_lexer.tk_Word, l_Text);
         ELSE
             RETURN NULL;
         END IF;

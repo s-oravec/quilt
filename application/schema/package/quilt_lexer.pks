@@ -6,17 +6,18 @@ CREATE OR REPLACE PACKAGE quilt_lexer AS
     -- special characters
     tk_Asterix         CONSTANT TokenType := '*';
     tk_Colon           CONSTANT TokenType := ':';
-    tk_Comma           CONSTANT TokenType := ';';
+    tk_Comma           CONSTANT TokenType := ',';
     tk_Dollar          CONSTANT TokenType := '$';
     tk_Dot             CONSTANT TokenType := '.';
     tk_Equals          CONSTANT TokenType := '=';
-    tk_ExclamationMark CONSTANT TokenType := '"';
+    tk_ExclamationMark CONSTANT TokenType := '!';
     tk_GreaterThan     CONSTANT TokenType := '>';
     tk_Hash            CONSTANT TokenType := '#';
     tk_LessThan        CONSTANT TokenType := '<';
     tk_LParenth        CONSTANT TokenType := '(';
     tk_Minus           CONSTANT TokenType := '-';
     tk_Percent         CONSTANT TokenType := '%';
+    tk_Pipe            CONSTANT TokenType := '|';
     tk_Plus            CONSTANT TokenType := '+';
     tk_Quote           CONSTANT TokenType := '"';
     tk_RParenth        CONSTANT TokenType := ')';
@@ -112,10 +113,13 @@ CREATE OR REPLACE PACKAGE quilt_lexer AS
     kw_WITH       CONSTANT TokenType := 'WITH';
 
     -- special tokens
-    tk_WhiteSpace  CONSTANT TokenType := '<WhiteSpace>';
-    tk_EOF         CONSTANT TokenType := '<EOF>';
-    tk_TextLiteral CONSTANT TokenType := '<TextLiteral>';
-    tk_Word        CONSTANT TokenType := '<Word>';
+    tk_WhiteSpace        CONSTANT TokenType := '<WhiteSpace>';
+    tk_EOF               CONSTANT TokenType := '<EOF>';
+    tk_TextLiteral       CONSTANT TokenType := '<TextLiteral>';
+    tk_NumberLiteral     CONSTANT TokenType := '<NumberLiteral>';
+    tk_SingleLineComment CONSTANT TokenType := '<SingleLineComment>';
+    tk_MultiLineComment  CONSTANT TokenType := '<MultiLineComment>';
+    tk_Word              CONSTANT TokenType := '<Word>';
 
     ----------------------------------------------------------------------------  
     -- Tokenizer methods
@@ -126,10 +130,18 @@ CREATE OR REPLACE PACKAGE quilt_lexer AS
 
     Type typ_source_text IS TABLE OF all_source.text%Type;
 
+    /* Reads source of owner.name object of type type and initilizes lexer with the source    
+    
+    %param p_owner owner of the object
+    %param p_name object name
+    %param p_type object type
+    
+    */
     PROCEDURE initialize
     (
         p_owner all_source.owner%Type,
-        p_name  all_source.name%Type
+        p_name  all_source.name%Type,
+        p_type  all_source.type%Type
     );
 
     PROCEDURE initialize(p_source_lines IN typ_source_text);
@@ -151,7 +163,12 @@ CREATE OR REPLACE PACKAGE quilt_lexer AS
 
     FUNCTION isSpecialCharacter(p_character IN VARCHAR2) RETURN BOOLEAN;
 
+    ----------------------------------------------------------------------------  
+    -- Lexer methods
+    ----------------------------------------------------------------------------  
     FUNCTION nextToken RETURN quilt_token;
+
+    FUNCTION tokens RETURN quilt_tokens;
 
 END quilt_lexer;
 /

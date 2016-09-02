@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
 
     ----------------------------------------------------------------------------
     PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2) IS
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo' || chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         pete.set_method_description(D);
         -- prepare
@@ -50,12 +50,13 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
         pete_assert.eq('b', quilt_lexer.peek(8));
         pete_assert.eq('a', quilt_lexer.peek(9));
         pete_assert.eq('z', quilt_lexer.peek(10));
-        pete_assert.is_null(quilt_lexer.peek(11));
+        pete_assert.eq(chr(10), quilt_lexer.peek(11));
+        pete_assert.is_null(quilt_lexer.peek(12));
     END;
 
     ----------------------------------------------------------------------------
     PROCEDURE currentAndConsumeItemWorks(D VARCHAR2) IS
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         pete.set_method_description(D);
         -- prepare
@@ -71,7 +72,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
     ----------------------------------------------------------------------------
     PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2) IS
         l_thrown      BOOLEAN := FALSE;
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         pete.set_method_description(D);
         -- prepare
@@ -90,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
     ----------------------------------------------------------------------------
     PROCEDURE commitWOSnapshotThrows(D VARCHAR2) IS
         l_thrown      BOOLEAN := FALSE;
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         pete.set_method_description(D);
         -- prepare
@@ -109,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
     ----------------------------------------------------------------------------
     PROCEDURE commitAfterSnapWorks(D VARCHAR2) IS
         l_thrown      BOOLEAN := FALSE;
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         pete.set_method_description(D);
         -- prepare
@@ -132,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
     ----------------------------------------------------------------------------
     PROCEDURE rollbackAfterSnapWorks(D VARCHAR2) IS
         l_thrown      BOOLEAN := FALSE;
-        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo', 'bar', 'baz');
+        l_sourceLines quilt_lexer.typ_source_text := quilt_lexer.typ_source_text('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
         l_indexBefore PLS_INTEGER;
     BEGIN
         pete.set_method_description(D);
