@@ -11,14 +11,34 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchWhitespace AS
 
     ----------------------------------------------------------------------------
     PROCEDURE continuousAsSingle(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := ' ' || chr(9);
+        l_sourceLines  quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
+        l_match        quilt_MatchWhiteSpace := quilt_MatchWhiteSpace();
+        l_matchedToken quilt_token;
     BEGIN
         pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_WhiteSpace, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        -- EOF is what has left
+        pete_assert.this(quilt_lexer.eof);
     END;
 
     ----------------------------------------------------------------------------
     PROCEDURE continuousAsSingleOnMultiLines(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := ' ' || chr(9) || chr(10) || chr(9) || ' ' || chr(10);
+        l_sourceLines  quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(' ' || chr(9) || chr(10), chr(9) || ' ' || chr(10));
+        l_match        quilt_MatchWhiteSpace := quilt_MatchWhiteSpace();
+        l_matchedToken quilt_token;
     BEGIN
         pete.set_method_description(D);
+        quilt_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(quilt_lexer.tk_WhiteSpace, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        -- EOF is what has left
+        pete_assert.this(quilt_lexer.eof);
     END;
 
 END;

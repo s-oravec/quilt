@@ -53,7 +53,6 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchWord AS
         quilt_lexer.initialize(l_sourceLines);
         --
         l_matchedToken := l_match.isMatch;
-        dbms_output.put_line(xmltype.createXml(l_matchedToken).getClobVal);
         pete_assert.eq(quilt_lexer.tk_Word, l_matchedToken.token);
         pete_assert.eq(l_Text, l_matchedToken.text);
         --

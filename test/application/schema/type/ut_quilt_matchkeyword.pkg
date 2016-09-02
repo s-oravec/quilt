@@ -54,7 +54,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchKeyword AS
 
     ----------------------------------------------------------------------------
     PROCEDURE keywordMatchIfDelimited(D VARCHAR2) IS
-        l_Text            VARCHAR2(255) := 'FUNCTION.FUNCTION FUNCTION';
+        l_Text            VARCHAR2(255) := 'function.funcTion FUNCtion';
         l_sourceLines     quilt_lexer.typ_source_text := quilt_lexer.typ_source_text(l_Text);
         l_match           quilt_MatchKeyword := quilt_MatchKeyword(quilt_lexer.kw_FUNCTION, quilt_lexer.kw_FUNCTION, 'N');
         l_matchDot        quilt_MatchKeyword := quilt_MatchKeyword(quilt_lexer.tk_Dot, quilt_lexer.tk_Dot);
@@ -66,6 +66,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchKeyword AS
         --
         l_matchedToken := l_match.isMatch;
         pete_assert.eq(quilt_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('function', l_matchedToken.text);
         --
         l_matchedToken := l_matchDot.isMatch;
         pete_assert.eq(quilt_lexer.tk_Dot, l_matchedToken.token);
@@ -73,12 +74,14 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_MatchKeyword AS
         --
         l_matchedToken := l_match.isMatch;
         pete_assert.eq(quilt_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('funcTion', l_matchedToken.text);
         --
         l_matchedToken := l_matchWhiteSpace.isMatch;
         pete_assert.eq(quilt_lexer.tk_WhiteSpace, l_matchedToken.token);
         --
         l_matchedToken := l_match.isMatch;
         pete_assert.eq(quilt_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('FUNCtion', l_matchedToken.text);
         --
         pete_assert.this(quilt_lexer.eof);
     END;
