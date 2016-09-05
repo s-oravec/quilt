@@ -4,6 +4,9 @@ DROP PACKAGE quilt_const;
 prompt .. Dropping package QUILT_UTIL
 DROP PACKAGE quilt_util;
 
+prompt .. Dropping package QUILT_UTIL_CU
+DROP PACKAGE quilt_util_cu;
+
 prompt .. Dropping package QUILT_LEXER
 DROP PACKAGE quilt_lexer;
 
@@ -12,9 +15,6 @@ DROP PACKAGE quilt_logger;
 
 prompt .. Dropping package QUILT_REPORTED_OBJECTS
 DROP PACKAGE quilt_reported_objects;
-
-prompt .. Dropping package QUILT_CORE
-DROP PACKAGE quilt_core;
 
 prompt .. Dropping package QUILT
 DROP PACKAGE quilt;

@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_reported_objects AS
     PROCEDURE before_each IS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
-        DELETE FROM quiltv_EnabledObject;
+        DELETE FROM quilt_reported_object;
         COMMIT;
     END;
 
@@ -27,7 +27,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_reported_objects AS
     BEGIN
         SELECT Count(*)
           INTO l_Result
-          FROM quiltv_EnabledObject eo
+          FROM quilt_reported_object eo
           FULL OUTER JOIN (SELECT * FROM user_objects WHERE object_type IN ('PACKAGE BODY', 'TYPE BODY', 'FUNCTION', 'PROCEDURE', 'TRIGGER')) uo ON (uo.object_name =
                                                                                                                                                     eo.object_name)
          WHERE eo.object_name IS NULL
@@ -49,13 +49,13 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_reported_objects AS
 
     ----------------------------------------------------------------------------
     PROCEDURE enableObjectExact(D VARCHAR2 := 'enableReport on exact object enables only that object') IS
-        lrec_enabledObject quiltv_EnabledObject%ROWTYPE;
+        lrec_enabledObject quilt_reported_object%ROWTYPE;
     BEGIN
         pete.set_method_description(D);
         -- test
         quilt_reported_objects.enable_report(p_owner => USER, p_object_name => $$PLSQL_UNIT);
         --assert
-        SELECT * INTO lrec_enabledObject FROM quiltv_EnabledObject eo;
+        SELECT * INTO lrec_enabledObject FROM quilt_reported_object eo;
         --  
         pete_assert.eq(USER, lrec_enabledObject.owner);
         pete_assert.eq($$PLSQL_UNIT, lrec_enabledObject.object_name);
@@ -70,13 +70,13 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_reported_objects AS
         quilt_reported_objects.enable_report(USER);
         quilt_reported_objects.disable_report(USER);
         --assert
-        SELECT Count(*) INTO l_Cnt FROM quiltv_EnabledObject eo;
+        SELECT Count(*) INTO l_Cnt FROM quilt_reported_object eo;
         pete_assert.eq(l_Cnt, 0, 'All user PL/SQL objects in schema should be disabled for report');
         --test
         quilt_reported_objects.enable_report(USER, $$PLSQL_UNIT);
         quilt_reported_objects.disable_report(USER);
         --assert
-        SELECT Count(*) INTO l_Cnt FROM quiltv_EnabledObject eo;
+        SELECT Count(*) INTO l_Cnt FROM quilt_reported_object eo;
         pete_assert.eq(l_Cnt, 0, 'All user PL/SQL objects in schema should be disabled for report');
     END;
 

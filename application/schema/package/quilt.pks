@@ -1,8 +1,35 @@
-CREATE OR REPLACE PACKAGE quilt IS
+CREATE OR REPLACE PACKAGE quilt AUTHID CURRENT_USER IS
 
     -- PL/SQL code coverage tool - start/stop profiling using DBMS_PROFILER
 
-    -- TODO: make it authid current_user to enable enableReport/disableReport to be run without any parameters and to pickup schema from USERENV, CURREN_USER context attribute
+    -- Enables Code Coverage reporting for schema/object
+    --
+    -- %param owner owner of the object
+    -- %param object_name object name accepts LIKE expressions with \ as escape
+    -- %param object_type object type exact value (PACKAGE BODY, TYPE BODY, PROCEDURE, FUNCTION, TRIGGER) or null
+    --
+    PROCEDURE enable_report
+    (
+        OWNER       IN VARCHAR2,
+        object_name IN VARCHAR2,
+        object_type IN VARCHAR2 DEFAULT NULL
+    );
+
+    -- Disables Code Coverage reporting for schema/object
+    --
+    -- %param owner owner of the object
+    -- %param object_name object name accepts LIKE expressions with \ as escape
+    -- %param object_type object type exact value (PACKAGE BODY, TYPE BODY, PROCEDURE, FUNCTION, TRIGGER) or null
+    --
+    PROCEDURE disable_report
+    (
+        OWNER       IN VARCHAR2,
+        object_name IN VARCHAR2,
+        object_type IN VARCHAR2 DEFAULT NULL
+    );
+
+    FUNCTION reported_objects RETURN quilt_object_list_type
+        PIPELINED;
 
     -- Default Test name
     DEFAULT_TEST_NAME CONSTANT VARCHAR2(255) := 'Code coverage test';
@@ -11,37 +38,16 @@ CREATE OR REPLACE PACKAGE quilt IS
     --
     -- %param p_test_name tet name
     --
-    PROCEDURE begin_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME);
-
-    FUNCTION begin_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER;
+    -- %return Quilt run_id
+    --
+    FUNCTION start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER;
+    PROCEDURE start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME);
 
     -- Stops profiling
     --
-    PROCEDURE end_profiling;
+    PROCEDURE stop_profiling;
 
-    -- Enables Code Coverage reporting for schema/object
-    --
-    -- %param owner owner of the object
-    -- %param object_name object name accepts LIKE expressions with \ as escape
-    --
-    PROCEDURE enable_report
-    (
-        OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2
-    );
-
-    -- Disables Code Coverage reporting for schema/object
-    --
-    -- %param owner owner of the object
-    -- %param object_name object name accepts LIKE expressions with \ as escape
-    --
-    PROCEDURE disable_report
-    (
-        OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2
-    );
-
-    -- returns lines of report formated as LCOV report identified by runid - returned by begin_profiling
+    -- returns lines of report formated as LCOV report identified by runid - returned by start_profiling
     -- if no runid is passed then last report within session is displayed
     --
     -- %param runid DBMS_PROFILER runid

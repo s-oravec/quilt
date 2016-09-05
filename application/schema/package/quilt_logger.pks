@@ -9,15 +9,23 @@ CREATE OR REPLACE PACKAGE quilt_logger IS
     -- %param p_runId DBMS_PROFILER run number as returned from DBMS_PROFILER.start_profiler call
     -- %param p_test_name test name
     --
-    PROCEDURE log_start(p_runId IN NUMBER,
-                        -- TODO: rename p_test_name to p_testName
-                        p_test_name IN VARCHAR2);
+    PROCEDURE log_start
+    (
+        p_quilt_run_id IN INTEGER,
+        p_test_name    IN VARCHAR2
+    );
+    PROCEDURE log_profiler_run_id
+    (
+        p_quilt_run_id    IN INTEGER,
+        p_profiler_run_id IN NUMBER,
+        p_profiler_user   IN VARCHAR2
+    );
 
     -- log end of profiling into QUILT_RUN table
     --
     -- %param p_runId DBMS_PROFILER run number as returned from DBMS_PROFILER.start_profiler call
     --
-    PROCEDURE log_stop(p_runId IN NUMBER);
+    PROCEDURE log_stop(p_quilt_run_id IN INTEGER);
 
     -- log message int QUILT_LOG table
     --

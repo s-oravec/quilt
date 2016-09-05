@@ -6,24 +6,19 @@ CREATE OR REPLACE PACKAGE quilt_reported_objects IS
     -- TODO: enable like - match using LIKE expression
 
     -- spy on object
-    PROCEDURE enable_report
-    (
-        p_owner       IN all_objects.owner%Type,
-        p_object_name IN all_objects.object_name%Type DEFAULT NULL
-    );
+    PROCEDURE enable_report(p_objects IN quilt_object_list_type);
 
-    PROCEDURE disable_report
-    (
-        p_owner       IN all_objects.owner%Type,
-        p_object_name IN all_objects.object_name%Type DEFAULT NULL
-    );
+    PROCEDURE disable_report(p_objects IN quilt_object_list_type);
 
     -- what is use of this method?
-    FUNCTION get_reported_objects
+    FUNCTION get_reported_objects RETURN quilt_object_list_type;
+
+    Type typ_source_tab IS TABLE OF all_source%ROWTYPE;
+    PROCEDURE save_source
     (
-        p_sessionId IN NUMBER DEFAULT NULL,
-        p_sid       IN NUMBER DEFAULT NULL
-    ) RETURN SYS_REFCURSOR;
+        p_quilt_run_id IN INTEGER,
+        p_sources      IN typ_source_tab
+    );
 
 END quilt_reported_objects;
 /

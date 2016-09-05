@@ -1,93 +1,76 @@
 CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
 
-    /** CURSOR data report */
-    CURSOR rcu_report
-    (
-        p_runId     NUMBER,
-        p_SID       NUMBER,
-        p_sessionId NUMBER
-    ) IS
-        WITH plsql AS
-         (SELECT r.runid,
-                 CASE
-                     WHEN u.unit_type = 'PACKAGE SPEC' THEN
-                      'PACKAGE'
-                     ELSE
-                      u.unit_type
-                 END Type,
-                 u.unit_owner OWNER,
-                 u.unit_name Name,
-                 d.line# Line,
-                 d.total_occur,
-                 d.total_time,
-                 u.unit_number
-            FROM plsql_profiler_runs r, plsql_profiler_units u, plsql_profiler_data D
-           WHERE r.runid = p_runId
-             AND r.runid = u.runid
-             AND u.runid = d.runid
-             AND u.unit_number = d.unit_number
-             AND u.unit_type != 'ANONYMOUS BLOCK')
-        SELECT s.owner, s.name, s.type, s.line, s.text, p.runid, p.unit_number, p.total_occur, p.total_time
-          FROM all_source s, plsql P, quilt_reported_object q
-         WHERE s.owner LIKE q.owner
-           AND s.name LIKE q.object_name
-           AND s.type = nvl(q.object_type, 'PACKAGE BODY')
-              --
-           AND q.sid = p_SID
-           AND q.sessionid = p_sessionId
-              --
-           AND s.OWNER = p.owner(+)
-           AND s.NAME = p.name(+)
-           AND s.TYPE = p.type(+)
-           AND s.LINE = p.line(+)
-         ORDER BY s.OWNER, s.name, s.type, s.line;
-
     ----------------------------------------------------------------------------
+    CURSOR rcu_report(p_quilt_run_id INTEGER) IS
+        WITH plsql_profiler AS
+         (SELECT pu.unit_owner OWNER,
+                 pu.unit_name AS Name,
+                 DECODE(pu.unit_type, 'PACKAGE SPEC', 'PACKAGE', pu.unit_type) AS Type,
+                 pd.line# AS Line,
+                 pd.total_occur,
+                 pd.total_time
+            FROM quilt_run qr
+           INNER JOIN plsql_profiler_runs Pr ON (pr.runid = qr.profiler_run_id)
+           INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_type != 'ANONYMOUS BLOCK') -- TODO: what?
+           INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
+           WHERE qr.quilt_run_id = p_quilt_run_id)
+        SELECT qs.quilt_run_id, qs.owner, qs.name, qs.type, qs.line, qs.text, ps.total_occur, ps.total_time
+          FROM quilt_reported_object_source qs
+          Left OUTER JOIN plsql_profiler ps ON (ps.owner = qs.owner --
+                                               AND ps.name = qs.name --
+                                               AND ps.type = qs.type --
+                                               AND ps.line = qs.line --
+                                               )
+         WHERE qs.quilt_run_id = p_quilt_run_id
+         ORDER BY qs.OWNER, qs.name, qs.type, qs.line;
+
+    ----------------------------------------------------------------------------    
     FUNCTION lines_found
     (
-        p_runId    NUMBER,
-        p_unitName VARCHAR2,
-        p_owner    VARCHAR2,
-        p_unitType VARCHAR2
+        p_quilt_run_id INTEGER,
+        p_unitName     VARCHAR2,
+        p_owner        VARCHAR2,
+        p_unitType     VARCHAR2
     ) RETURN PLS_INTEGER IS
         l_Result PLS_INTEGER;
     BEGIN
-        -- TODO: filter only for QUILT_METHODS
+        -- TODO: is it filtered only for QUILT_REPORTED_OBJECT?
         SELECT Count(1)
           INTO l_Result
-          FROM plsql_profiler_data D, plsql_profiler_units u
-         WHERE d.runid = p_runId
-           AND u.runid = d.runid
-           AND u.unit_number = d.unit_number
-           AND u.unit_name = upper(p_unitName)
-           AND u.unit_owner = upper(p_owner)
-           --
-           AND u.unit_type = upper(p_unitType);
-           --
+          FROM quilt_run qr
+         INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
+                                               AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
+                                               AND pu.unit_type = upper(p_unitType) -- TODO: not so correct
+                                               )
+         INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
+         WHERE 1 = 1
+           AND qr.quilt_run_id = p_quilt_run_id;
+        --
         RETURN l_Result;
     END;
 
     ----------------------------------------------------------------------------
     FUNCTION lines_hit
     (
-        p_runId    NUMBER,
-        p_unitName VARCHAR2,
-        p_owner    VARCHAR2,
-        p_unitType VARCHAR2
+        p_quilt_run_id INTEGER,
+        p_unitName     VARCHAR2,
+        p_owner        VARCHAR2,
+        p_unitType     VARCHAR2
     ) RETURN PLS_INTEGER IS
         l_Result PLS_INTEGER;
     BEGIN
+        -- TODO: is it filtered only for QUILT_REPORTED_OBJECT?
         SELECT Count(1)
           INTO l_Result
-          FROM plsql_profiler_data D, plsql_profiler_units u
-         WHERE d.runid = p_runId
-           AND u.runid = d.runid
-           AND u.unit_number = d.unit_number
-           AND u.unit_name = upper(p_unitName)
-           AND u.unit_owner = upper(p_owner)
-              --
-           AND u.unit_type = upper(p_unitType)
-           AND d.total_occur > 0;
+          FROM quilt_run qr
+         INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
+                                               AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
+                                               AND pu.unit_type = upper(p_unitType) -- TODO: not so correct
+                                               )
+         INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
+         WHERE 1 = 1
+           AND qr.quilt_run_id = p_quilt_run_id
+           AND pd.total_occur > 0;
         --
         RETURN l_Result;
         --
@@ -96,36 +79,32 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
     ----------------------------------------------------------------------------    
     PROCEDURE insert_report_line
     (
-        p_sessionId IN NUMBER,
-        p_sid       IN NUMBER,
-        p_runId     IN NUMBER,
-        p_idx       IN OUT NUMBER,
-        p_line      IN VARCHAR2
+        p_quilt_run_id IN INTEGER,
+        p_line         IN OUT NUMBER,
+        p_text         IN VARCHAR2
     ) IS
     BEGIN
         --
-        INSERT INTO quilt_report_line (sessionid, SID, runid, idx, Line) VALUES (p_sessionId, p_sid, p_runId, p_idx, p_line);
-        p_idx := p_idx + 1;
+        INSERT INTO quilt_report_line (quilt_run_id, Line, Text) VALUES (p_quilt_run_id, p_line, p_text);
+        p_line := p_line + 1;
     END insert_report_line;
 
     ----------------------------------------------------------------------------
     PROCEDURE save_report
     (
-        p_sessionId IN NUMBER,
-        p_sid       IN NUMBER,
-        p_runId     IN NUMBER,
-        p_object    IN OUT quilt_report_process_type
+        p_quilt_run_id IN INTEGER,
+        p_object       IN OUT quilt_report_process_type
     ) IS
         l_idx NUMBER := p_object.idx;
         --
-        PROCEDURE lproc_insRow(p_line IN VARCHAR2) IS
+        PROCEDURE lproc_insRow(p_text IN VARCHAR2) IS
         BEGIN
-            insert_report_line(p_sessionId, p_SID, p_runId, l_idx, p_line);
-            quilt_logger.log_detail(p_line);
+            insert_report_line(p_quilt_run_id, l_idx, p_text);
+            quilt_logger.log_detail(p_text);
         END;
         --
     BEGIN
-        quilt_logger.log_detail('begin:p_sessionId=$1, p_SID=$2, p_runId=$3', p_sessionId, p_SID, p_runId);
+        quilt_logger.log_detail('begin:p_quilt_run_id=$1', p_quilt_run_id);
         quilt_logger.log_detail('idx', l_idx);
         -- TN
         lproc_insRow(quilt_const.TAG_TN || p_object.tag_tn);
@@ -174,45 +153,23 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
         COMMIT;
     END save_report;
 
-    ----------------------------------------------------------------------------  
-
     ----------------------------------------------------------------------------
-    PROCEDURE process_profiler_run
-    (
-        p_sessionId IN NUMBER DEFAULT NULL,
-        p_sid       IN NUMBER DEFAULT NULL,
-        p_runId     IN NUMBER DEFAULT NULL
-    ) IS
-    
-        lrec_report rcu_report%ROWTYPE;
+    PROCEDURE process_profiler_run(p_quilt_run_id IN NUMBER DEFAULT NULL) IS
+        lrec_quilt_run quilt_run%ROWTYPE;
+        lrec_report    rcu_report%ROWTYPE;
         --
-        --lint_idx       NUMBER := 1;
-        lbol_first_run BOOLEAN := FALSE;
-        --
-        l_sessionId   NUMBER := nvl(p_sessionId, quilt_core.get_SESSIONID);
-        l_SID         NUMBER := nvl(p_sid, quilt_core.get_SID);
-        lint_runid    NUMBER := nvl(p_runId, quilt_core.get_Runid);
-        lstr_testname VARCHAR2(2000) := nvl(quilt_core.get_TestName, quilt.DEFAULT_TEST_NAME);
-        lobj_report   quilt_report_process_type := quilt_report_process_type(2, quilt_const.TAG_EOR);
-        lstr_name     VARCHAR2(4000);
-        --
-        lint_branch_cnt NUMBER;
+        l_isFirstRun    BOOLEAN := FALSE;
+        l_reportProcess quilt_report_process_type := quilt_report_process_type(2, quilt_const.TAG_EOR);
+        l_Name          VARCHAR2(4000);
+        l_branchCount   NUMBER;
     BEGIN
-        quilt_logger.log_detail('begin:p_sesionId=$1, p_SID=$2, p_runId=$3, l_sessionId=$4, l_SID=$5, l_runId=$6',
-                                p_sessionId,
-                                p_sid,
-                                p_runId,
-                                l_sessionId,
-                                l_SID,
-                                lint_runid);
+        quilt_logger.log_detail('begin:p_quilt_run_id=$1', p_quilt_run_id);
+        SELECT * INTO lrec_quilt_run FROM quilt_run WHERE quilt_run_id = p_quilt_run_id;
         --
         --uklid pred novym reportem pro stejne RUNID
-        DELETE quilt_report_line
-         WHERE sessionid = l_sessionId
-           AND SID = l_SID
-           AND runid = lint_runid;
+        DELETE quilt_report_line WHERE quilt_run_id = p_quilt_run_id;
         --
-        OPEN rcu_report(lint_runid, l_SID, l_sessionId);
+        OPEN rcu_report(p_quilt_run_id);
         --
         LOOP
             FETCH rcu_report
@@ -222,89 +179,90 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
             -- prvni radek objektu, inicializace typu, promennych
             IF lrec_report.line = 1 THEN
                 --
-                IF lbol_first_run THEN
+                IF l_isFirstRun THEN
                     quilt_logger.log_detail('vice souboru');
                     -- vice souboru, provedeme zapis dat z typu do tabulky
-                    quilt_logger.log_detail('idx_1s', lobj_report.idx);
-                    save_report(l_sessionId, l_SID, lint_runid, lobj_report);
+                    quilt_logger.log_detail('idx_1s', l_reportProcess.idx);
+                    save_report(p_quilt_run_id, l_reportProcess);
                     --
-                    quilt_logger.log_detail('idx_1e', lobj_report.idx);
-                    lobj_report := quilt_report_process_type(lobj_report.idx, quilt_const.TAG_EOR);
-                    quilt_logger.log_detail('idx_2', lobj_report.idx);
+                    quilt_logger.log_detail('idx_1e', l_reportProcess.idx);
+                    l_reportProcess := quilt_report_process_type(l_reportProcess.idx, quilt_const.TAG_EOR);
+                    quilt_logger.log_detail('idx_2', l_reportProcess.idx);
                 ELSE
                     quilt_logger.log_detail(': prvni beh');
-                    lbol_first_run := TRUE;
+                    l_isFirstRun := TRUE;
                 END IF;
                 --
-                lobj_report.tag_da   := quilt_lcov_lines();
-                lobj_report.tag_fn   := quilt_lcov_lines();
-                lobj_report.tag_fnda := quilt_lcov_lines();
-                lobj_report.tag_brda := quilt_lcov_lines();
-                lobj_report.tag_fnf  := 0;
-                lobj_report.tag_brf  := 0;
+                l_reportProcess.tag_da   := quilt_lcov_lines();
+                l_reportProcess.tag_fn   := quilt_lcov_lines();
+                l_reportProcess.tag_fnda := quilt_lcov_lines();
+                l_reportProcess.tag_brda := quilt_lcov_lines();
+                l_reportProcess.tag_fnf  := 0;
+                l_reportProcess.tag_brf  := 0;
                 -- TN
-                lobj_report.tag_tn := lstr_testname;
+                l_reportProcess.tag_tn := lrec_quilt_run.test_name;
                 -- SF
-                lobj_report.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
-                quilt_logger.log_detail(': ' || lint_runid || ',' || lrec_report.runid || ',' || lrec_report.name || ',' ||
+                l_reportProcess.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
+                quilt_logger.log_detail(': ' || p_quilt_run_id || ',' || lrec_report.quilt_run_id || ',' || lrec_report.name || ',' ||
                                         lrec_report.owner || ',' || lrec_report.type);
                 -- LH - lines hit
-                lobj_report.tag_lh := lines_hit(p_runId    => lint_runid,
-                                                p_unitName => lrec_report.name,
-                                                p_owner    => lrec_report.owner,
-                                                p_unitType => lrec_report.type);
+                l_reportProcess.tag_lh := lines_hit(p_quilt_run_id => p_quilt_run_id,
+                                                    p_unitName     => lrec_report.name,
+                                                    p_owner        => lrec_report.owner,
+                                                    p_unitType     => lrec_report.type);
                 -- LF - lines found
-                lobj_report.tag_lf := lines_found(p_runId    => lint_runid,
-                                                  p_unitName => lrec_report.name,
-                                                  p_owner    => lrec_report.owner,
-                                                  p_unitType => lrec_report.type);
+                l_reportProcess.tag_lf := lines_found(p_quilt_run_id => p_quilt_run_id,
+                                                      p_unitName     => lrec_report.name,
+                                                      p_owner        => lrec_report.owner,
+                                                      p_unitType     => lrec_report.type);
                 -- BR
-                lint_branch_cnt := 0;
+                l_branchCount := 0;
             END IF;
             -- analyza radku, todo
             IF (lower(lrec_report.text) LIKE '%procedure %' OR lower(lrec_report.text) LIKE '%function %') AND
                ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- FN:<line number of function start>,<function name>
                 BEGIN
-                    lstr_name := quilt_util.getMethodName(lrec_report.text);
+                    l_Name := quilt_util.getMethodName(lrec_report.text);
                 
                 EXCEPTION
                     WHEN OTHERS THEN
                         quilt_logger.log_detail(': FN: ' || SQLERRM);
-                        lstr_name := lrec_report.text;
+                        l_Name := lrec_report.text;
                 END;
-                lobj_report.tag_fn.extend;
-                lobj_report.tag_fn(lobj_report.tag_fn.last) := lrec_report.line || ',' || lstr_name;
+                l_reportProcess.tag_fn.extend;
+                l_reportProcess.tag_fn(l_reportProcess.tag_fn.last) := lrec_report.line || ',' || l_Name;
                 -- FNDA:<execution count>,<function name>
             
                 -- FNF:<number of functions found>
-                lobj_report.tag_fnf := nvl(lobj_report.tag_fnf, 0) + 1;
+                l_reportProcess.tag_fnf := nvl(l_reportProcess.tag_fnf, 0) + 1;
                 -- FNH:<number of function hit>
-                lobj_report.tag_fnh := 0;
+                l_reportProcess.tag_fnh := 0;
             END IF;
             IF lower(lrec_report.text) LIKE '% if %' AND ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- BRDA:<line number>,<block number>,<branch number>,<taken>
-                lobj_report.tag_brda.extend;
+                l_reportProcess.tag_brda.extend;
                 -- todo ,1 -> counts blocks
-                lobj_report.tag_brda(lobj_report.tag_brda.last) := lrec_report.line || ',1,' || lint_branch_cnt || ',' || lint_branch_cnt;
-                lint_branch_cnt := lint_branch_cnt + 1;
+                l_reportProcess.tag_brda(l_reportProcess.tag_brda.last) := lrec_report.line || ',1,' || l_branchCount || ',' ||
+                                                                           l_branchCount;
+                l_branchCount := l_branchCount + 1;
                 -- BRF:<number of branches found>
-                lobj_report.tag_brf := nvl(lobj_report.tag_brf, 0) + 1;
+                l_reportProcess.tag_brf := nvl(l_reportProcess.tag_brf, 0) + 1;
                 -- BRH:<number of branches hit>
-                lobj_report.tag_brh := 0;
+                l_reportProcess.tag_brh := 0;
             END IF;
             -- DA
-            lobj_report.tag_da.extend;
+            l_reportProcess.tag_da.extend;
             --DA:<line number>,<execution count>[,<checksum>]
-            lobj_report.tag_da(lobj_report.tag_da.last) := lrec_report.line || ',' || nvl(lrec_report.total_occur, 0);
+            l_reportProcess.tag_da(l_reportProcess.tag_da.last) := lrec_report.line || ',' || nvl(lrec_report.total_occur, 0);
             quilt_logger.log_detail(': DA ' || quilt_const.TAG_DA || lrec_report.line || ',' || nvl(lrec_report.total_occur, 0));
             --
         END LOOP;
-        IF lobj_report.tag_da IS NOT NULL THEN
-            quilt_logger.log_detail('DA count:' || lobj_report.tag_da.count);
+        IF l_reportProcess.tag_da IS NOT NULL THEN
+            quilt_logger.log_detail('DA count:' || l_reportProcess.tag_da.count);
             -- zapis
             quilt_logger.log_detail('zapis');
-            save_report(l_sessionId, l_SID, lint_runid, lobj_report);
+            save_report(p_quilt_run_id, l_reportProcess);
         ELSE
             quilt_logger.log_detail(': lobj_report.tag_da is null!!!');
         END IF;

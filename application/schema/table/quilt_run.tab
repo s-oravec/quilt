@@ -1,10 +1,26 @@
-CREATE TABLE quilt_run
-  (
-    sessionid NUMBER NOT NULL ,
-    sid       NUMBER NOT NULL ,
-    runid     NUMBER NOT NULL ,
-    start_ts  TIMESTAMP ,
-    stop_ts   TIMESTAMP ,
-    test_name VARCHAR2 (255)
-  ) ;
-ALTER TABLE quilt_run ADD CONSTRAINT quilt_run_pk PRIMARY KEY ( sessionid, sid, runid ) ;
+create table QUILT_RUN
+(
+  quilt_run_id    INTEGER not null,
+  profiler_run_id INTEGER,
+  profiler_user   VARCHAR2(30),
+  start_ts        TIMESTAMP(6),
+  stop_ts         TIMESTAMP(6),
+  test_name       VARCHAR2(255)
+);
+
+comment on column QUILT_RUN.quilt_run_id
+  is 'Quilt run identifier - surrogate key';
+comment on column QUILT_RUN.profiler_run_id
+  is 'DBMS_PROFILER runId';
+comment on column QUILT_RUN.profiler_user
+  is 'User, that ran Quilt profiling';
+comment on column QUILT_RUN.start_ts
+  is 'Start Timestamp';
+comment on column QUILT_RUN.stop_ts
+  is 'Stop Timestamp';
+comment on column QUILT_RUN.test_name
+  is 'Test name';
+
+alter table QUILT_RUN
+  add constraint QUILT_RUN_PK primary key (QUILT_RUN_ID)
+;

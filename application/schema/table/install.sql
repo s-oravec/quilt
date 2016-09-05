@@ -10,6 +10,9 @@ prompt .. Creating table QUILT_REPORT_LINE
 prompt .. Creating table QUILT_RUN
 @@quilt_run.tab
 
+prompt .. Creating table QUILT_REPORTED_OBJECT_SOURCE
+@@quilt_reported_object_source.tab
+
 prompt .. Creating table PLSQL_PROFILER_RUNS
 @@plsql_profiler_runs.tab
 

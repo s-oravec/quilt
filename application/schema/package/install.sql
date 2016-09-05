@@ -5,11 +5,11 @@ prompt .. Creating package QUILT_CONST
 prompt .. Creating package QUILT_UTIL
 @@quilt_util.pks
 
+prompt .. Creating package QUILT_UTIL_CU
+@@quilt_util_cu.pks
+
 prompt .. Creating package QUILT_LOGGER
 @@quilt_logger.pks
-
-prompt .. Creating package QUILT_CORE
-@@quilt_core.pks
 
 prompt .. Creating package QUILT_REPORTED_OBJECTS
 @@quilt_reported_objects.pks
@@ -27,11 +27,11 @@ rem body
 prompt .. Creating package body QUILT_UTIL
 @@quilt_util.pkb
 
+prompt .. Creating package body QUILT_UTIL_CU
+@@quilt_util_cu.pkb
+
 prompt .. Creating package body QUILT_LOGGER
 @@quilt_logger.pkb
-
-prompt .. Creating package body QUILT_CORE
-@@quilt_core.pkb
 
 prompt .. Creating package body QUILT
 @@quilt.pkb

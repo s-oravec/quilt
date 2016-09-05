@@ -10,9 +10,6 @@ prompt Create sequences
 prompt Create packages
 @&&run_dir package
 
-prompt Create views
-@&&run_dir view
-
 prompt Compiling invalid objects
 begin
   dbms_utility.compile_schema(schema => user, compile_all => FALSE);

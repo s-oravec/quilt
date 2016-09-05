@@ -1,5 +1,3 @@
-rem @&&run_dir_begin
-
 prompt .. Creating type QUILT_INTEGER_TAB
 @@quilt_integer_tab.tps
 
@@ -106,4 +104,3 @@ prompt .. Creating type body QUILT_REPORT_PROCESS_TYPE
 
 prompt .. Creating type body QUILT_TOKEN
 @@quilt_token.tpb
-

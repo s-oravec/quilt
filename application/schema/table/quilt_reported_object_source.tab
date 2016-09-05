@@ -1,0 +1,33 @@
+create table QUILT_REPORTED_OBJECT_SOURCE
+(
+  quilt_run_id  NUMBER not null,
+  owner         VARCHAR2(128) not null,
+  name          VARCHAR2(128) not null,
+  type          VARCHAR2(12) not null,
+  line          NUMBER not null,
+  text          VARCHAR2(4000),
+  origin_con_id NUMBER
+)
+;
+
+comment on table QUILT_REPORTED_OBJECT_SOURCE
+  is 'Object source stored by Quilt to be able to show results later (even after object recompilation)';
+
+comment on column QUILT_REPORTED_OBJECT_SOURCE.quilt_run_id
+  is 'Quilt run identifier';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.owner
+  is 'Object owner';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.name
+  is 'Object name';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.type
+  is 'Object type';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.line
+  is 'Line number';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.text
+  is 'Source text';
+comment on column QUILT_REPORTED_OBJECT_SOURCE.origin_con_id
+  is 'Origin con id';
+
+alter table QUILT_REPORTED_OBJECT_SOURCE
+  add constraint QUILT_RPT_OBJ_SRC_PK primary key (QUILT_RUN_ID, OWNER, NAME, TYPE, LINE)
+  using index compress 4;

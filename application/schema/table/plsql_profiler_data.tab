@@ -20,4 +20,3 @@ alter table PLSQL_PROFILER_DATA
 alter table PLSQL_PROFILER_DATA
   add foreign key (RUNID, UNIT_NUMBER)
   references PLSQL_PROFILER_UNITS (RUNID, UNIT_NUMBER);
-

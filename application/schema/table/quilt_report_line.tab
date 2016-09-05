@@ -1,9 +1,8 @@
 CREATE TABLE quilt_report_line
-  (
-    sessionid NUMBER NOT NULL ,
-    sid       NUMBER NOT NULL ,
-    runid     NUMBER NOT NULL ,
-    idx       NUMBER NOT NULL ,
-    line      VARCHAR2 (4000)
-  ) ;
-ALTER TABLE quilt_report_line ADD CONSTRAINT quilt_report_line_pk PRIMARY KEY ( sessionid, sid, runid, idx ) ;
+(
+    quilt_run_id INTEGER NOT NULL,
+    line         INTEGER NOT NULL,
+    text         VARCHAR2(4000)
+)
+;
+ALTER TABLE quilt_report_line ADD CONSTRAINT quilt_report_line_pk PRIMARY KEY (quilt_run_id, line) ;

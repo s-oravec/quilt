@@ -11,10 +11,10 @@ CREATE OR REPLACE PACKAGE ut_quilt_util AS
 
     PROCEDURE getOptLvlWorks(D VARCHAR2 := 'get PLSQL optimize level returns objects PLSQL Optimize level');
 
-    procedure containsWorks(D varchar2 := 'Contains works as expected');
+    PROCEDURE containsWorks(D VARCHAR2 := 'Contains works as expected');
 
-    procedure getObjectWorks(D varchar2 := 'gwtObject works as expected');
-    procedure getObjectReturnsNull(D varchar2 := 'getObject return NULL for non-existent object.');
+    PROCEDURE getObjectWorks(D VARCHAR2 := 'gwtObject works as expected');
+    PROCEDURE getObjectReturnsNull(D VARCHAR2 := 'getObject return NULL for non-existent object.');
 
     PROCEDURE getCallerQualifiedName(D VARCHAR2 := 'getCallerQualifiedName works');
     PROCEDURE getCurrentQualifiedName(D VARCHAR2 := 'getCurrenQualifiedName works');
@@ -33,7 +33,8 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
     FUNCTION helper_getPLSQLOptimizeLevel
     (
         p_owner       IN VARCHAR2,
-        p_objecT_name IN VARCHAR2
+        p_objecT_name IN VARCHAR2,
+        p_object_type IN VARCHAR2
     ) RETURN BINARY_INTEGER IS
         l_Result BINARY_INTEGER;
     BEGIN
@@ -42,6 +43,7 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
           FROM all_plsql_object_settings t
          WHERE t.owner = p_owner
            AND t.name = p_object_name
+           AND (p_object_type IS NULL OR t.type = p_object_type)
            AND t.type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
                           quilt_const.OBJ_TYPE_TYPE_BODY,
                           quilt_const.OBJ_TYPE_PROCEDURE,
@@ -104,35 +106,44 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
     ----------------------------------------------------------------------------
     PROCEDURE setOptLvlWithObjectExact(D VARCHAR2) IS
         --
-        PROCEDURE test_and_assert(p_object_name all_objects.object_name%Type) IS
+        PROCEDURE test_and_assert
+        (
+            p_object_name all_objects.object_name%Type,
+            p_object_type all_objects.object_type%Type
+        ) IS
         BEGIN
             quilt_util.setPLSQLOptimizeLevel(USER, p_object_name, quilt_util.PLSQL_OPTIMIZE_LEVEL_1);
             pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_1,
-                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name, p_object_type),
                            'For object ' || p_object_name);
             quilt_util.setPLSQLOptimizeLevel(USER, p_object_name, quilt_util.PLSQL_OPTIMIZE_LEVEL_2);
             pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_2,
-                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name, p_object_type),
                            'For object ' || p_object_name);
         END;
         --
     BEGIN
         pete.set_method_description(D);
         --
-        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_F');
-        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_P');
-        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_TRG');
-        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_PKG');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_F', 'FUNCTION');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_P', 'PROCEDURE');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_TRG', 'TRIGGER');
+        test_and_assert('FIX_UTIL_OPTIMIZELEVEL_PKG', 'PACKAGE BODY');
+        -- TODO: TYPE BODY
         --
     END;
 
     ----------------------------------------------------------------------------
     PROCEDURE setOptLvlWithObjectLike(D VARCHAR2) IS
         --
-        PROCEDURE test(p_object_name all_objects.object_name%Type) IS
+        PROCEDURE test
+        (
+            p_object_name all_objects.object_name%Type,
+            p_object_type all_objects.object_type%Type
+        ) IS
         BEGIN
             pete_assert.eq(quilt_util.PLSQL_OPTIMIZE_LEVEL_1,
-                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name, p_object_type),
                            'For object ' || p_object_name);
         END;
         --
@@ -140,29 +151,34 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
         pete.set_method_description(D);
         --
         quilt_util.setPLSQLOptimizeLevel(USER, 'FIX_UTIL_OPTIMIZELEVEL%', quilt_util.PLSQL_OPTIMIZE_LEVEL_1);
-        test('FIX_UTIL_OPTIMIZELEVEL_F');
-        test('FIX_UTIL_OPTIMIZELEVEL_P');
-        test('FIX_UTIL_OPTIMIZELEVEL_TRG');
-        test('FIX_UTIL_OPTIMIZELEVEL_PKG');
+        test('FIX_UTIL_OPTIMIZELEVEL_F', 'FUNCTION');
+        test('FIX_UTIL_OPTIMIZELEVEL_P', 'PROCEDURE');
+        test('FIX_UTIL_OPTIMIZELEVEL_TRG', 'TRIGGER');
+        test('FIX_UTIL_OPTIMIZELEVEL_PKG', 'PACKAGE BODY');
+        -- TODO: TYPE BODY
     END;
 
     ----------------------------------------------------------------------------
     PROCEDURE getOptLvlWorks(D VARCHAR2) IS
         --
-        PROCEDURE test(p_object_name all_objects.object_name%Type) IS
+        PROCEDURE test
+        (
+            p_object_name all_objects.object_name%Type,
+            p_object_type all_objects.object_type%Type
+        ) IS
         BEGIN
-            pete_assert.eq(helper_getPLSQLOptimizeLevel(USER, p_object_name),
-                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name),
+            pete_assert.eq(helper_getPLSQLOptimizeLevel(USER, p_object_name, p_object_type),
+                           quilt_util.getPLSQLOptimizeLevel(USER, p_object_name, p_object_type),
                            'For object ' || p_object_name);
         END;
         --
     BEGIN
         pete.set_method_description(D);
         --
-        test('FIX_UTIL_OPTIMIZELEVEL_F');
-        test('FIX_UTIL_OPTIMIZELEVEL_P');
-        test('FIX_UTIL_OPTIMIZELEVEL_TRG');
-        test('FIX_UTIL_OPTIMIZELEVEL_PKG');
+        test('FIX_UTIL_OPTIMIZELEVEL_F', 'FUNCTION');
+        test('FIX_UTIL_OPTIMIZELEVEL_P', 'PROCEDURE');
+        test('FIX_UTIL_OPTIMIZELEVEL_TRG', 'TRIGGER');
+        test('FIX_UTIL_OPTIMIZELEVEL_PKG', 'PACKAGE BODY');
     END;
 
     ----------------------------------------------------------------------------
@@ -179,41 +195,38 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_util AS
         pete_assert.eq($$PLSQL_UNIT || '.GETCURRENTQUALIFIEDNAME', quilt_util.getCurrentQualifiedName);
     END;
 
-
     ----------------------------------------------------------------------------
-    procedure containsWorks(D varchar2 := 'Contains works as expected') IS
+    PROCEDURE containsWorks(D VARCHAR2 := 'Contains works as expected') IS
     BEGIN
         pete.set_method_description(D);
-        pete_assert.this(quilt_util.contains('123','1'));
-        pete_assert.this(quilt_util.contains('1%3','%'));
-        pete_assert.this(quilt_util.contains('^%3','^'));
-        pete_assert.this(quilt_util.contains('1%$','$'));
-        pete_assert.this(quilt_util.contains('1''3',''''));
+        pete_assert.this(quilt_util.contains('123', '1'));
+        pete_assert.this(quilt_util.contains('1%3', '%'));
+        pete_assert.this(quilt_util.contains('^%3', '^'));
+        pete_assert.this(quilt_util.contains('1%$', '$'));
+        pete_assert.this(quilt_util.contains('1''3', ''''));
     END;
 
-
-
     ----------------------------------------------------------------------------
-    procedure getObjectWorks(D varchar2) is
+    PROCEDURE getObjectWorks(D VARCHAR2) IS
         l_object quilt_object_type;
     BEGIN
         pete.set_method_description(D);
         --
-        l_object := quilt_util.getObject(user, 'FIX_UTIL_OPTIMIZELEVEL_F');
+        l_object := quilt_util.getObject(USER, 'FIX_UTIL_OPTIMIZELEVEL_F');
         --
-        pete_assert.eq(user, l_object.schema_name);
+        pete_assert.eq(USER, l_object.owner);
         pete_assert.eq('FIX_UTIL_OPTIMIZELEVEL_F', l_object.object_name);
         pete_assert.eq('FUNCTION', l_object.object_type);
     END;
 
     ----------------------------------------------------------------------------
-    procedure getObjectReturnsNull(D varchar2) is
+    PROCEDURE getObjectReturnsNull(D VARCHAR2) IS
         l_object quilt_object_type;
     BEGIN
         --log
         pete.set_method_description(D);
-        l_object := quilt_util.getObject(user, '_FOO');
-        pete_assert.this(l_object is null, 'Returned object should be null');
+        l_object := quilt_util.getObject(USER, '_FOO');
+        pete_assert.this(l_object IS NULL, 'Returned object should be null');
     END;
 
 END;

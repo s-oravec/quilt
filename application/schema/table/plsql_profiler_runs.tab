@@ -15,4 +15,3 @@ comment on table PLSQL_PROFILER_RUNS
   is 'Run-specific information for the PL/SQL profiler';
 alter table PLSQL_PROFILER_RUNS
   add primary key (RUNID);
-

@@ -1,33 +1,41 @@
 CREATE OR REPLACE PACKAGE BODY quilt_logger IS
 
+    g_quilt_run_id quilt_run.quilt_run_id%Type;
+
     ----------------------------------------------------------------------------
     PROCEDURE log_start
     (
-        p_runid     IN NUMBER,
-        p_test_name IN VARCHAR2
+        p_quilt_run_id IN INTEGER,
+        p_test_name    IN VARCHAR2
     ) IS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
-        log_detail('starting quilt with runid: ' || p_runid || ', test_name: ' || p_test_name);
-        INSERT INTO quilt_run
-            (sessionid, SID, runid, start_ts, test_name)
-        VALUES
-            (quilt_core.get_SESSIONID, quilt_core.get_SID, p_runid, systimestamp, p_test_name);
+        log_detail('starting quilt with p_quilt_run_id=$1, test_name=$2', p_quilt_run_id, p_test_name);
+        g_quilt_run_id := p_quilt_run_id;
+        INSERT INTO quilt_run (quilt_run_id, start_ts, test_name) VALUES (p_quilt_run_id, systimestamp, p_test_name);
         COMMIT;
     END log_start;
 
     ----------------------------------------------------------------------------
-    PROCEDURE log_stop(p_runid IN NUMBER) IS
+    PROCEDURE log_profiler_run_id
+    (
+        p_quilt_run_id    IN INTEGER,
+        p_profiler_run_id IN NUMBER,
+        p_profiler_user   IN VARCHAR2
+    ) IS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
-        -- TODO: Henry?
-        -- todo osetreni
-        log_detail('stopping quilt with runid: ' || p_runid);
-        UPDATE quilt_run
-           SET stop_ts = systimestamp
-         WHERE sessionid = quilt_core.get_SESSIONID
-           AND SID = quilt_core.get_SID
-           AND runid = p_runid;
+        log_detail('stopping quilt with quilt_run_id=$1', p_quilt_run_id);
+        UPDATE quilt_run SET profiler_run_id = p_profiler_run_id, profiler_user = p_profiler_user WHERE quilt_run_id = p_quilt_run_id;
+        COMMIT;
+    END log_profiler_run_id;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE log_stop(p_quilt_run_id IN INTEGER) IS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+    BEGIN
+        log_detail('stopping quilt with quilt_run_id=$1', p_quilt_run_id);
+        UPDATE quilt_run SET stop_ts = systimestamp WHERE quilt_run_id = p_quilt_run_id;
         COMMIT;
     END log_stop;
 
@@ -64,9 +72,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_logger IS
                                             p_placeholder10);
         --    
         INSERT INTO quilt_log
-            (sessionid, SID, runid, procedure_name, msg, insert_ts)
+            (log_id, quilt_run_id, procedure_name, msg, insert_ts)
         VALUES
-            (quilt_core.get_SESSIONID, quilt_core.get_SID, quilt_core.get_Runid, l_caller, l_msg, systimestamp);
+            (quilt_log_id.nextval, g_quilt_run_id, l_caller, l_msg, systimestamp);
         COMMIT;
     END log_detail;
 

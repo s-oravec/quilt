@@ -1,5 +1,3 @@
-@&&run_dir_begin
-
 rem SET SERVEROUTPUT ON
 rem
 rem prompt Dropping types
@@ -81,5 +79,3 @@ DROP TYPE QUILT_LCOV_LINES;
 
 prompt .. Dropping type QUILT_REPORT_ITEM
 DROP TYPE QUILT_REPORT_ITEM;
-
-@&&run_dir_end
