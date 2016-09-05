@@ -1,3 +1,12 @@
+rem
+rem Run from your schema to use specific Quilt installation (schema)
+rem
+rem Usage
+rem     sql @use.sql <Quilt schema>
+rem
+set verify off
+define g_quilt_schema = "&1"
+
 prompt init sqlsn
 @sqlsnrc
 

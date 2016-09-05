@@ -1,22 +1,20 @@
 rem Quilt 0.1.0
+rem Deployment of dev envirnment
 define g_quilt_dev_schema = "QUILT_000100_DEV"
+@@create_development_schema &&g_quilt_dev_schema
 
-rem Quilt Development Schema
-prompt create new &&g_quilt_dev_schema user
-CREATE USER &&g_quilt_dev_schema IDENTIFIED BY &&g_quilt_dev_schema
-  DEFAULT TABLESPACE users TEMPORARY TABLESPACE temp
-  QUOTA UNLIMITED ON users;
+rem multischema test users
+define g_quilt_tst_profiled_app    = "QUILT_000100_TST_PROF_APP"
+@@create_development_schema &&g_quilt_tst_profiled_app
 
-GRANT CONNECT TO &&g_quilt_dev_schema;
-GRANT CREATE TABLE to &&g_quilt_dev_schema;
-GRANT CREATE PROCEDURE to &&g_quilt_dev_schema;
-GRANT CREATE TYPE to &&g_quilt_dev_schema;
-GRANT CREATE SEQUENCE TO &&g_quilt_dev_schema;
-GRANT CREATE VIEW TO &&g_quilt_dev_schema;
-GRANT CREATE SYNONYM TO &&g_quilt_dev_schema;
+define g_quilt_tst_priv_profiler   = "QUILT_000100_TST_PRIV_PROF"
+@@create_development_schema &&g_quilt_tst_priv_profiler
 
---testing only
-GRANT DEBUG CONNECT SESSION TO &&g_quilt_dev_schema;
+rem privileged profiler user has create any procedure/trigger/type
+grant create any procedure to &&g_quilt_tst_priv_profiler;
+grant create any trigger to &&g_quilt_tst_priv_profiler;
+grant create any type to &&g_quilt_tst_priv_profiler;
 
-
+define g_quilt_tst_unpriv_profiler = "QUILT_000100_TST_UNPRIV_PROF"
+@@create_development_schema &&g_quilt_tst_unpriv_profiler
 

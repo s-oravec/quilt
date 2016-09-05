@@ -15,3 +15,7 @@ begin
   dbms_utility.compile_schema(schema => user, compile_all => FALSE);
 end;
 /
+show errors
+
+prompt Grant access on API to PUBLIC
+@&&run_dir grant

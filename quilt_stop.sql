@@ -1,9 +1,10 @@
-SET ECHO OFF
-SET TERM ON
+set echo off
+set verify off
 
-PROMPT Stop profile
-SET TERM OFF
-EXEC quilt.spying_end;
+prompt .. Stopping profiling
+set term off
+
+exec quilt.stop_profiling;
 
 -- Don't exit from sqlplus!!!
 

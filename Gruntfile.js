@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 module.exports = function(grunt) {
 
     grunt.initConfig({
@@ -34,6 +36,11 @@ module.exports = function(grunt) {
                 command: function (script) {
                     return '<%= sqlTool %> <%= appUserDbConnectString %> @' + script + '.sql'
                 }
+            },
+            sqlScript : {
+                command: function(connectString, script, testTarget) {
+                    return '<%= sqlTool %> <%= '+ connectString +' %> @' + script + '.sql ' + testTarget
+                }
             }
         }
 
@@ -51,19 +58,39 @@ module.exports = function(grunt) {
         grunt.config.set('sqlTool', config.sqlTool);
         grunt.config.set('superUserDbConnectString', config.db.superUserDbConnectString);
         grunt.config.set('appUserDbConnectString', config.db.appUserDbConnectString);
+        grunt.config.set('tstProfiledAppUserDbConnectString', config.db.tstProfiledAppUserDbConnectString);
+        grunt.config.set('tstPrivProfilerUserDbConnectString', config.db.tstPrivProfilerUserDbConnectString);
+        grunt.config.set('tstUnprivProfilerUserDbConnectString', config.db.tstUnprivProfilerUserDbConnectString);
     });
 
     grunt.registerTask('ci', ['loadConfig', 'reinstall', 'test', 'watch']);
 
     grunt.registerTask('ct', ['loadConfig', 'watch']);
 
-    grunt.registerTask('install_test', ['loadConfig', 'shell:runAppUserScript:install_test']);
+    // Tests
 
-    grunt.registerTask('uninstall_test', ['loadConfig', 'shell:runAppUserScript:uninstall_test']);
-
-    grunt.registerTask('reinstall_test', ['loadConfig', 'shell:runAppUserScript:uninstall_test', 'shell:runAppUserScript:install_test']);
-
-    grunt.registerTask('test', ['loadConfig', 'shell:runAppUserScript:test']);
+    // singleschema
+    // TODO: define test targets as array in config and unwind script with array, or for each directory in test
+    grunt.registerTask('install_test',   ['loadConfig',
+                                            'shell:sqlScript:appUserDbConnectString:install_test:singleschema',
+                                            'shell:sqlScript:tstProfiledAppUserDbConnectString:install_test:multischema_profiled_app',
+                                            'shell:sqlScript:tstPrivProfilerUserDbConnectString:install_test:multischema_privileged_profiler',
+                                            'shell:sqlScript:tstUnprivProfilerUserDbConnectString:install_test:multischema_unprivileged_profiler'
+                                         ]);
+    grunt.registerTask('uninstall_test', ['loadConfig',
+                                            'shell:sqlScript:appUserDbConnectString:uninstall_test:singleschema',
+                                            'shell:sqlScript:tstProfiledAppUserDbConnectString:uninstall_test:multischema_profiled_app',
+                                            'shell:sqlScript:tstPrivProfilerUserDbConnectString:uninstall_test:multischema_privileged_profiler',
+                                            'shell:sqlScript:tstUnprivProfilerUserDbConnectString:uninstall_test:multischema_unprivileged_profiler'
+                                         ]);
+    grunt.registerTask('reinstall_test', ['loadConfig', 'uninstall_test', 'install_test']);
+    grunt.registerTask('test',           ['loadConfig',
+                                            'shell:sqlScript:appUserDbConnectString:test:singleschema',
+                                            'shell:sqlScript:tstProfiledAppUserDbConnectString:test:multischema_profiled_app',
+                                            'shell:sqlScript:tstPrivProfilerUserDbConnectString:test:multischema_privileged_profiler',
+                                            'shell:sqlScript:tstUnprivProfilerUserDbConnectString:test:multischema_unprivileged_profiler'
+                                         ]);
+    // Users & Application
 
     grunt.registerTask('create', ['loadConfig', 'shell:runSuperUserScript:create']);
 

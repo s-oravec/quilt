@@ -1,12 +1,13 @@
-SET ECHO OFF
-SET TERM ON
+set echo off
+set verify off
 
-PROMPT Start profile
-PROMPT Enter test name, max length 240 char
-ACCEPT l_test_name char prompt 'Test name: '
-SET TERM OFF
+define l_test_name_def = "Code coverage test"
+prompt .. Starting profiling
 
-EXEC quilt.spying_start('&l_test_name');
+prompt Enter test name (max length 240 char)
+accept l_test_name  prompt "Test name [&&l_test_name_def]: " default "&&l_test_name_def"
+
+exec quilt.start_profiling('&l_test_name');
 
 undefine l_test_name
--- Don't exit from sqlplus!!!
+undefine l_test_name_def

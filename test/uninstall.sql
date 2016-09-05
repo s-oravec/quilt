@@ -1,5 +1,1 @@
-prompt Uninstall application
-@&&run_dir application
-
-prompt Uninstall fixture
-@&&run_dir fixture
+@&&run_dir &&g_test_target

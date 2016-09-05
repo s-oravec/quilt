@@ -1,6 +1,9 @@
 prompt Recompile test packages with debug
 @@recompile_with_debug.sql
 
+define g_pete_schema = 'PETE_010000'
+@./oradb_modules/pete/application/api/synonyms.sql
+
 prompt Grant execute on UT% packages to Pete
 define g_pete_schema = PETE_010000
 BEGIN
