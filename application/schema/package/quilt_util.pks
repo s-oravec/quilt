@@ -25,6 +25,16 @@ CREATE OR REPLACE PACKAGE quilt_util IS
         ) RETURN quilt_object_type;
     */
 
+    -- TODO move somewhere else   
+    Type typ_profiler_data_tab IS TABLE OF quilt_profiler_data%ROWTYPE;
+    PROCEDURE save_profiler_data(p_data IN typ_profiler_data_tab);
+
+    Type typ_profiler_units_tab IS TABLE OF quilt_profiler_units%ROWTYPE;
+    PROCEDURE save_profiler_units(p_units IN typ_profiler_units_tab);
+
+    Type typ_profiler_runs_tab IS TABLE OF quilt_profiler_runs%ROWTYPE;
+    PROCEDURE save_profiler_runs(p_runs IN typ_profiler_runs_tab);
+
     -- Returns true if p_string contains p_lookup
     --
     -- %param p_string string

@@ -16,7 +16,6 @@ GRANT CREATE VIEW TO &&l_schema_name;
 GRANT CREATE SYNONYM TO &&l_schema_name;
 GRANT CREATE TRIGGER TO &&l_schema_name;
 
---testing only
 GRANT DEBUG CONNECT SESSION TO &&l_schema_name;
 
 undefine l_schema_name

@@ -1,0 +1,45 @@
+CREATE OR REPLACE PACKAGE ut_quilt AS
+
+    Description CONSTANT pete_types.typ_description := 'ut_quilt';
+
+    PROCEDURE enableReportThrowsWOCreatePriv(D VARCHAR2 := 'enable_report throws for other users object, uf user has not CREATE ANY % privilege');
+    PROCEDURE enableReportThrowsForNoMatch(D VARCHAR2 := 'enable_report throws when no object matches the selection');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE enableReportThrowsWOCreatePriv(D VARCHAR2) IS
+        l_thrown BOOLEAN;
+    BEGIN
+        pete.set_method_description(D);
+        --
+        BEGIN
+            quilt.enable_report('QUILT_000100_TST_PROF_APP', 'TESTED_PACKAGE');
+            l_thrown := FALSE;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        pete_assert.this(a_value_in => l_thrown, a_comment_in => 'Method should have thrown');
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE enableReportThrowsForNoMatch(D VARCHAR2) IS
+        l_thrown BOOLEAN;
+    BEGIN
+        pete.set_method_description(D);
+        --
+        BEGIN
+            quilt.enable_report('QUILT_000100_TST_PROF_APP', 'NONEXISTANT_PACKAGE');
+            l_thrown := FALSE;
+        EXCEPTION
+            WHEN OTHERS THEN
+                l_thrown := TRUE;
+        END;
+        pete_assert.this(a_value_in => l_thrown, a_comment_in => 'Method should have thrown');
+    END;
+
+END;
+/

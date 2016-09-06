@@ -1,1 +1,1 @@
-prompt Installing test target - multischema_privileged_profiler
+@&&run_dir application

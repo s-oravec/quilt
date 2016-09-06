@@ -1,1 +1,1 @@
-create sequence quilt_run_id;
+create sequence quilt_run_id start with 1 nocache;

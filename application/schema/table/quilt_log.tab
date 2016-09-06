@@ -1,10 +1,17 @@
 CREATE TABLE quilt_log 
 (
     log_id          INTEGER,
-    quilt_run_id    NUMBER,
+    quilt_run_id    INTEGER,
     procedure_name  VARCHAR2(255),
     msg             VARCHAR2(4000),
     insert_ts       Timestamp
 );
 CREATE INDEX quilt_log_isnertts ON quilt_log (insert_ts);
 CREATE INDEX quilt_log_runid ON quilt_log (quilt_run_id);
+ALTER TABLE QUILT_LOG 
+  add constraint quilt_log_quiltrun_fk
+  foreign key (quilt_run_id)
+  references quilt_run(quilt_run_id)
+  on delete cascade
+;  
+  

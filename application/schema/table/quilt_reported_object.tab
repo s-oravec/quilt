@@ -1,4 +1,4 @@
-create global temporary table QUILT_REPORTED_OBJECT
+create /*global temporary*/ table QUILT_REPORTED_OBJECT
 (
   owner       VARCHAR2(128) not null,
   object_name VARCHAR2(128) not null,

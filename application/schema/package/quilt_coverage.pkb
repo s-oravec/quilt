@@ -9,11 +9,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                  pd.line# AS Line,
                  pd.total_occur,
                  pd.total_time
-            FROM quilt_run qr
-           INNER JOIN plsql_profiler_runs Pr ON (pr.runid = qr.profiler_run_id)
-           INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_type != 'ANONYMOUS BLOCK') -- TODO: what?
-           INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
-           WHERE qr.quilt_run_id = p_quilt_run_id)
+            FROM quilt_profiler_units pu
+           INNER JOIN quilt_profiler_data pd ON (pd.quilt_run_id = p_quilt_run_id AND pd.unit_number = pu.unit_number)
+           WHERE pu.quilt_run_id = p_quilt_run_id
+             AND pu.unit_type != 'ANONYMOUS BLOCK')
         SELECT qs.quilt_run_id, qs.owner, qs.name, qs.type, qs.line, qs.text, ps.total_occur, ps.total_time
           FROM quilt_reported_object_source qs
           Left OUTER JOIN plsql_profiler ps ON (ps.owner = qs.owner --
@@ -34,17 +33,15 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
     ) RETURN PLS_INTEGER IS
         l_Result PLS_INTEGER;
     BEGIN
-        -- TODO: is it filtered only for QUILT_REPORTED_OBJECT?
         SELECT Count(1)
           INTO l_Result
-          FROM quilt_run qr
-         INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
-                                               AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
-                                               AND pu.unit_type = upper(p_unitType) -- TODO: not so correct
-                                               )
-         INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
-         WHERE 1 = 1
-           AND qr.quilt_run_id = p_quilt_run_id;
+          FROM quilt_profiler_units pu
+         INNER JOIN quilt_profiler_data pd ON (pd.quilt_run_id = p_quilt_run_id AND pd.unit_number = pu.unit_number)
+         WHERE pu.quilt_run_id = p_quilt_run_id
+           AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
+           AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
+           AND pu.unit_type = upper(p_unitType) -- TODO: not so correct              
+        ;
         --
         RETURN l_Result;
     END;
@@ -59,18 +56,15 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
     ) RETURN PLS_INTEGER IS
         l_Result PLS_INTEGER;
     BEGIN
-        -- TODO: is it filtered only for QUILT_REPORTED_OBJECT?
         SELECT Count(1)
           INTO l_Result
-          FROM quilt_run qr
-         INNER JOIN plsql_profiler_units pu ON (pu.runid = qr.profiler_run_id AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
-                                               AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
-                                               AND pu.unit_type = upper(p_unitType) -- TODO: not so correct
-                                               )
-         INNER JOIN plsql_profiler_data pd ON (pd.runid = qr.profiler_run_id AND pd.unit_number = pu.unit_number)
-         WHERE 1 = 1
-           AND qr.quilt_run_id = p_quilt_run_id
-           AND pd.total_occur > 0;
+          FROM quilt_profiler_units pu
+         INNER JOIN quilt_profiler_data pd ON (pd.quilt_run_id = p_quilt_run_id AND pd.unit_number = pu.unit_number)
+         WHERE pu.quilt_run_id = p_quilt_run_id
+           AND pu.unit_name = upper(p_unitName) -- TODO: not so correct
+           AND pu.unit_owner = upper(p_owner) -- TODO: not so correct
+           AND pu.unit_type = upper(p_unitType) -- TODO: not so correct
+           AND NOT (pd.total_occur = 0 AND pd.total_time = 0);
         --
         RETURN l_Result;
         --

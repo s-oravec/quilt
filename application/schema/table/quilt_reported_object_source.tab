@@ -31,3 +31,7 @@ comment on column QUILT_REPORTED_OBJECT_SOURCE.origin_con_id
 alter table QUILT_REPORTED_OBJECT_SOURCE
   add constraint QUILT_RPT_OBJ_SRC_PK primary key (QUILT_RUN_ID, OWNER, NAME, TYPE, LINE)
   using index compress 4;
+alter table QUILT_REPORTED_OBJECT_SOURCE
+  add constraint QUILT_RPTOBJSRC_QUILTRUN_FK foreign key (quilt_run_id)
+  references QUILT_RUN(quilt_run_id)
+  on delete cascade;

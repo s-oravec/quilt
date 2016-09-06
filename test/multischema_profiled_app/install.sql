@@ -1,1 +1,1 @@
-prompt Installing test target - multischema_profiled_app
+@&&run_dir application

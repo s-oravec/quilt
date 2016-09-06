@@ -1,0 +1,16 @@
+CREATE OR REPLACE Type tested_type AS OBJECT
+(
+    dummy INTEGER,
+    MEMBER PROCEDURE test
+)
+;
+/
+CREATE OR REPLACE Type BODY tested_type AS
+
+    MEMBER PROCEDURE test IS
+    BEGIN
+        NULL;
+    END;
+
+END;
+/
