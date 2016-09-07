@@ -86,7 +86,6 @@ module.exports = function(grunt) {
     grunt.registerTask('reinstall_test', ['loadConfig', 'uninstall_test', 'install_test']);
     grunt.registerTask('test',           ['loadConfig',
                                             'shell:sqlScript:appUserDbConnectString:test:singleschema',
-                                            'shell:sqlScript:tstProfiledAppUserDbConnectString:test:multischema_profiled_app',
                                             'shell:sqlScript:tstPrivProfilerUserDbConnectString:test:multischema_privileged_profiler',
                                             'shell:sqlScript:tstUnprivProfilerUserDbConnectString:test:multischema_unprivileged_profiler'
                                          ]);

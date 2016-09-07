@@ -5,6 +5,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_reported_objects AS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         quilt_logger.log_detail('begin');
+        IF p_objects.count = 0 THEN
+            raise_application_error(-20000, 'No objects found matching specified selection criteria.');
+        END IF;
+        --
         MERGE INTO quilt_reported_object t
         USING (SELECT * FROM TABLE(p_objects)) s
         ON (s.owner = t.owner AND s.object_name = t.object_name AND s.object_type = t.object_type)
@@ -24,6 +28,10 @@ CREATE OR REPLACE PACKAGE BODY quilt_reported_objects AS
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         quilt_logger.log_detail('begin');
+        IF p_objects.count = 0 THEN
+            raise_application_error(-20000, 'No objects found matching specified selection criteria.');
+        END IF;
+        --
         DELETE FROM quilt_reported_object WHERE (OWNER, object_name, object_type) IN (SELECT * FROM TABLE(p_objects));
         COMMIT;
         quilt_logger.log_detail('end');

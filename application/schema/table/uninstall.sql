@@ -22,3 +22,11 @@ DROP TABLE plsql_profiler_units CASCADE CONSTRAINTS PURGE;
 prompt .. Dropping table QUILT_REPORTED_OBJECT_SOURCE
 DROP TABLE quilt_reported_object_source CASCADE CONSTRAINTS PURGE;
 
+prompt .. Dropping table QUILT_PROFILER_DATA
+DROP TABLE quilt_profiler_data CASCADE CONSTRAINTS PURGE;
+
+prompt .. Dropping table QUILT_PROFILER_RUNS
+DROP TABLE quilt_profiler_runs CASCADE CONSTRAINTS PURGE;
+
+prompt .. Dropping table QUILT_PROFILER_UNITS
+DROP TABLE quilt_profiler_units CASCADE CONSTRAINTS PURGE;

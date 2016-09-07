@@ -25,21 +25,14 @@ CREATE OR REPLACE PACKAGE quilt_util_cu AUTHID CURRENT_USER AS
     -- TODO: set optimization to LEVEL 1 as it yields more profiling data
     -- Compiles object with PLSQL_OPTIMIZE_LEVEL = p_level
     --
-    -- %param p_owner object owner
-    -- %param p_object_name object name
-    -- %param p_object_type object_type    
+    -- %param p_objects
     -- %param p_level new PLSQL_OPTIMIZE_LEVEL %see http://bit.ly/2bnwv9O
     --
     PROCEDURE setPLSQLOptimizeLevel
     (
-        p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2,
-        p_level       IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1
+        p_objects IN quilt_object_list_type,
+        p_level   IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1
     );
-
-    /** compile all objects for spying list - set PLSQL_OPTIMIZE_LEVEL = 1/2 */
-    PROCEDURE setPLSQLOptimizeLevelAll(p_level IN NUMBER DEFAULT PLSQL_OPTIMIZE_LEVEL_1);
 
     -- Gets list of objects (schemaName, objectName, objectType) from ALL_OBJECTS that match passed values using SQL LIKE expression with "\" as escape character
     --
@@ -57,6 +50,12 @@ CREATE OR REPLACE PACKAGE quilt_util_cu AUTHID CURRENT_USER AS
     (
         p_quilt_run_id IN INTEGER,
         p_objects      IN quilt_object_list_type
+    );
+
+    PROCEDURE save_profiler_data
+    (
+        p_quilt_run_id    IN INTEGER,
+        p_profiler_run_id IN NUMBER
     );
 
 END;

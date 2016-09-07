@@ -1,1 +1,1 @@
-prompt Uninstalling test target - multischema_profiled_app
+@&&run_dir application

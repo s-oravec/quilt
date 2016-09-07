@@ -156,13 +156,13 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
     PROCEDURE enable_report
     (
         OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2,
+        object_name IN VARCHAR2 DEFAULT NULL,
         object_type IN VARCHAR2 DEFAULT NULL
     ) IS
     BEGIN
         quilt_logger.log_detail('begin:owner=$1,object_name=$2,object_type=$3', OWNER, object_name, object_type);
         check_create_privilege(OWNER, object_name, object_type);
-        quilt_reported_objects.enable_report(quilt_util_cu.getObjectList(OWNER, object_name, object_type));
+        quilt_reported_objects.enable_report(quilt_util_cu.getObjectList(OWNER, object_name, object_type));        
         quilt_logger.log_detail('end');
     END enable_report;
 
@@ -170,7 +170,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
     PROCEDURE disable_report
     (
         OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2,
+        object_name IN VARCHAR2 DEFAULT NULL,
         object_type IN VARCHAR2 DEFAULT NULL
     ) IS
     BEGIN
@@ -186,6 +186,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         quilt_logger.log_detail('begin');
         --
         ensure_profiler_objects_exist;
+        quilt_util_cu.setPLSQLOptimizeLevel(quilt_reported_objects.get_reported_objects);
         --
         g_quilt_run_id := quilt_util.next_run_id;
         quilt_logger.log_start(p_quilt_run_id => g_quilt_run_id, p_test_name => p_test_name);
@@ -220,6 +221,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         quilt_logger.log_detail('begin');
         -- stop profilingu
         dbms_profiler.stop_profiler;
+        quilt_util_cu.save_profiler_data(p_quilt_run_id => g_quilt_run_id, p_profiler_run_id => g_profiler_run_id);
         -- zalogovat stop profilingu
         quilt_logger.log_stop(p_quilt_run_id => g_quilt_run_id);
         quilt_logger.log_detail('end');

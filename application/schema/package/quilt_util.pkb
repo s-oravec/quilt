@@ -190,5 +190,26 @@ CREATE OR REPLACE PACKAGE BODY quilt_util IS
         RETURN quilt_run_id.nextval;
     END;
 
+    ----------------------------------------------------------------------------
+    PROCEDURE save_profiler_data(p_data IN typ_profiler_data_tab) IS
+    BEGIN
+        FORALL idx IN 1 .. p_data.count
+            INSERT INTO quilt_profiler_data VALUES p_data (idx);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE save_profiler_units(p_units IN typ_profiler_units_tab) IS
+    BEGIN
+        FORALL idx IN 1 .. p_units.count
+            INSERT INTO quilt_profiler_units VALUES p_units (idx);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE save_profiler_runs(p_runs IN typ_profiler_runs_tab) IS
+    BEGIN
+        FORALL idx IN 1 .. p_runs.count
+            INSERT INTO quilt_profiler_runs VALUES p_runs (idx);
+    END;
+
 END quilt_util;
 /

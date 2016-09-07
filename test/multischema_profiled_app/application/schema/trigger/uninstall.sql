@@ -1,0 +1,1 @@
+prompt .. Dropping trigger TESTED_TRIGGER - gets dropped by dropping TESTED_TABLE

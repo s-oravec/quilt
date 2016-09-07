@@ -1,0 +1,3 @@
+create table tested_table (
+  id integer
+);

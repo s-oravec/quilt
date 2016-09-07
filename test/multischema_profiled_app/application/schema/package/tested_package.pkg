@@ -1,0 +1,15 @@
+create or replace package tested_package as
+
+  procedure test;
+
+end;
+/
+create or replace package body tested_package as
+
+  procedure test is
+  begin
+    null;
+  end;
+
+end;
+/

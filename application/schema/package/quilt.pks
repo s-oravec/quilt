@@ -5,13 +5,13 @@ CREATE OR REPLACE PACKAGE quilt AUTHID CURRENT_USER IS
     -- Enables Code Coverage reporting for schema/object
     --
     -- %param owner owner of the object
-    -- %param object_name object name accepts LIKE expressions with \ as escape
+    -- %param object_name object name accepts LIKE expressions with \ as escape, optional
     -- %param object_type object type exact value (PACKAGE BODY, TYPE BODY, PROCEDURE, FUNCTION, TRIGGER) or null
     --
     PROCEDURE enable_report
     (
         OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2,
+        object_name IN VARCHAR2 DEFAULT NULL,
         object_type IN VARCHAR2 DEFAULT NULL
     );
 
@@ -24,7 +24,7 @@ CREATE OR REPLACE PACKAGE quilt AUTHID CURRENT_USER IS
     PROCEDURE disable_report
     (
         OWNER       IN VARCHAR2,
-        object_name IN VARCHAR2,
+        object_name IN VARCHAR2 DEFAULT NULL,
         object_type IN VARCHAR2 DEFAULT NULL
     );
 

@@ -40,8 +40,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
           BULK COLLECT
           INTO ltab_result
           FROM all_objects obj
-         WHERE OWNER LIKE upper(p_owner) ESCAPE '/'
-           AND object_name LIKE upper(p_object_name) ESCAPE '/'
+         WHERE OWNER = p_owner
+           AND (p_object_name IS NULL OR object_name LIKE upper(p_object_name) ESCAPE '/')
            AND (p_object_type IS NULL OR object_type = p_object_type)
            AND object_type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
                                quilt_const.OBJ_TYPE_TYPE_BODY,
@@ -141,74 +141,36 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
         quilt_logger.log_detail('end:$1 $2.$3 compiled with PLSQL_OPTIMIZE_LEVEL=$4', p_object_type, p_owner, p_object_name, p_level);
     END setPLSQLOptimizeLevelImpl;
 
-    ----------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
     PROCEDURE setPLSQLOptimizeLevel
     (
-        p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2,
-        p_level       IN NUMBER
+        p_objects IN quilt_object_list_type,
+        p_level   IN NUMBER
     ) IS
-        ltab_objects quilt_object_list_type;
-    BEGIN
-        quilt_logger.log_detail('begin:p_owner=$1, p_object_name=$2, p_level=$3', p_owner, p_object_name, p_level);
-        -- check level first
-        IF p_level IN (PLSQL_OPTIMIZE_LEVEL_0, PLSQL_OPTIMIZE_LEVEL_1, PLSQL_OPTIMIZE_LEVEL_2, PLSQL_OPTIMIZE_LEVEL_3) THEN
-            -- get both header/spec in case of package/type
-            ltab_objects := getObjectList(p_owner, p_object_name, p_object_type);
-            FOR obj IN (SELECT * FROM TABLE(ltab_objects)) LOOP
-                IF obj.object_type IN (quilt_const.OBJ_TYPE_PACKAGE_BODY,
-                                       quilt_const.OBJ_TYPE_TYPE_BODY,
-                                       quilt_const.OBJ_TYPE_PROCEDURE,
-                                       quilt_const.OBJ_TYPE_FUNCTION,
-                                       quilt_const.OBJ_TYPE_TRIGGER) THEN
-                    setPLSQLOptimizeLevelImpl(p_owner       => obj.owner,
-                                              p_object_name => obj.object_name,
-                                              p_object_type => obj.object_type,
-                                              p_level       => p_level);
-                ELSE
-                    -- NoFormat Start
-                    raise_application_error(-20000,
-                                            quilt_util.formatString('$1 $2.$3 is not PLSQL object. Cannot set PLSQL Optimize level',
-                                                         obj.object_type,
-                                                         obj.owner,
-                                                         obj.object_name)
-                                           );
-                    -- NoFormat End
-                END IF;
-            END LOOP;
-        ELSE
-            raise_application_error(-20000, 'Unsupported PLSQL Optimize level: ' || p_level);
-        END IF;
-        quilt_logger.log_detail('end');
-    END setPLSQLOptimizeLevel;
-
-    ---------------------------------------------------------------------------
-    PROCEDURE setPLSQLOptimizeLevelAll(p_level IN NUMBER) IS
         l_level NUMBER;
     BEGIN
         quilt_logger.log_detail('begin');
         BEGIN
-            FOR reportedObject IN (SELECT * FROM quilt_reported_object t) LOOP
-                IF objectExists(reportedObject.owner, reportedObject.object_name, reportedObject.object_type) THEN
-                    l_level := getPLSQLOptimizeLevel(reportedObject.owner, reportedObject.object_name, reportedObject.object_type);
+            FOR idx IN 1 .. p_objects.count LOOP
+                IF objectExists(p_objects(idx).owner, p_objects(idx).object_name, p_objects(idx).object_type) THEN
+                    l_level := getPLSQLOptimizeLevel(p_objects(idx).owner, p_objects(idx).object_name, p_objects(idx).object_type);
                     IF NOT l_level = p_level THEN
-                        setPLSQLOptimizeLevelImpl(p_owner       => reportedObject.owner,
-                                                  p_object_name => reportedObject.object_name,
-                                                  p_object_type => reportedObject.object_type,
+                        setPLSQLOptimizeLevelImpl(p_owner       => p_objects(idx).owner,
+                                                  p_object_name => p_objects(idx).object_name,
+                                                  p_object_type => p_objects(idx).object_type,
                                                   p_level       => p_level);
                     ELSE
                         quilt_logger.log_detail('$1 $2.$3 already has level=$4',
-                                                reportedObject.object_type,
-                                                reportedObject.owner,
-                                                reportedObject.object_name,
+                                                p_objects(idx).object_type,
+                                                p_objects(idx).owner,
+                                                p_objects(idx).object_name,
                                                 l_level);
                     END IF;
                 ELSE
                     quilt_logger.log_detail('Object $1 $2.$3 does not exist.',
-                                            reportedObject.object_type,
-                                            reportedObject.owner,
-                                            reportedObject.object_name);
+                                            p_objects(idx).object_type,
+                                            p_objects(idx).owner,
+                                            p_objects(idx).object_name);
                 END IF;
             END LOOP;
         EXCEPTION
@@ -218,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
                 quilt_logger.log_detail('Unhandled exception:', substr(SQLERRM, 1, 2000));
         END;
         quilt_logger.log_detail('end');
-    END setPLSQLOptimizeLevelAll;
+    END setPLSQLOptimizeLevel;
 
     ----------------------------------------------------------------------------  
     PROCEDURE save_reported_object_source
@@ -235,6 +197,62 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
           JOIN all_source s ON (s.owner = o.owner AND s.name = o.object_name AND s.type = o.object_type)
          ORDER BY s.owner, s.name, s.type, s.line;
         quilt_reported_objects.save_source(p_quilt_run_id => p_quilt_run_id, p_sources => ltab_sources);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE save_profiler_data
+    (
+        p_quilt_run_id    IN INTEGER,
+        p_profiler_run_id IN NUMBER
+    ) IS
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        l_Data    quilt_util.typ_profiler_data_tab;
+        l_Units   quilt_util.typ_profiler_units_tab;
+        l_runs    quilt_util.typ_profiler_runs_tab;
+        l_objects quilt_object_list_type;
+    BEGIN
+        --
+        l_objects := quilt_reported_objects.get_reported_objects;
+        --
+        -- runs
+        SELECT p_quilt_run_id, related_run, run_owner, run_date, run_comment, run_total_time, run_system_info, run_comment1
+          BULK COLLECT
+          INTO l_runs
+          FROM plsql_profiler_runs
+         WHERE runid = p_profiler_run_id;
+        -- units
+        SELECT p_quilt_run_id, unit_number, unit_type, unit_owner, unit_name, unit_timestamp, total_time
+          BULK COLLECT
+          INTO l_Units
+          FROM TABLE(l_objects) obj
+          JOIN plsql_profiler_units pu ON (pu.runid = p_profiler_run_id --
+                                          AND pu.unit_owner = obj.owner --
+                                          AND pu.unit_name = obj.object_name --
+                                          AND decode(pu.unit_type, 'PACKAGE SPEC', 'PACAKGE', pu.unit_type) = obj.object_type);
+        -- data
+        SELECT p_quilt_run_id, pd.unit_number, pd.line#, pd.total_occur, pd.total_time, pd.min_time, pd.max_time
+          BULK COLLECT
+          INTO l_Data
+          FROM TABLE(l_objects) obj
+          JOIN plsql_profiler_units pu ON (pu.runid = p_profiler_run_id --
+                                          AND pu.unit_owner = obj.owner --
+                                          AND pu.unit_name = obj.object_name --
+                                          AND decode(pu.unit_type, 'PACKAGE SPEC', 'PACAKGE', pu.unit_type) = obj.object_type)
+          JOIN plsql_profiler_data pd ON (pd.runid = pu.runid --
+                                         AND pd.unit_number = pu.unit_number)
+        -- needs very thorough parsing of code - maybe later                                         
+        -- WHERE NOT (pd.total_time = 0 AND total_occur = 0)
+        ;
+        -- save
+        quilt_util.save_profiler_runs(l_runs);
+        quilt_util.save_profiler_units(l_Units);
+        quilt_util.save_profiler_data(l_Data);
+        --
+        COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            RAISE;
     END;
 
 END;

@@ -1,0 +1,20 @@
+create table QUILT_PROFILER_RUNS
+(
+  quilt_run_id    NUMBER not null,
+  related_run     NUMBER,
+  run_owner       VARCHAR2(32),
+  run_date        DATE,
+  run_comment     VARCHAR2(2047),
+  run_total_time  NUMBER,
+  run_system_info VARCHAR2(2047),
+  run_comment1    VARCHAR2(2047)
+)
+;
+comment on table QUILT_PROFILER_RUNS
+  is 'Run-specific information for the PL/SQL profiler';
+alter table QUILT_PROFILER_RUNS
+  add primary key (quilt_run_id);
+alter table QUILT_PROFILER_RUNS
+  add constraint QUILT_PROFRUN_QUILTRUN_FK foreign key (quilt_run_id)
+  references QUILT_RUN(quilt_run_id)
+  on delete cascade;    
