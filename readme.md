@@ -3,28 +3,50 @@
 Quilt is PL/SQL code coverage tool written in PL/SQL and SQL*Plus.
 It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#ARPLS039) supplied with Oracle Database
 
-## How it works (will work)
+# How it works (will work)
 
-  1. Implement code & test
-  2. `dbms_profiler.start_profiler`
-  3. Run test
-  4. `dbms_profiler.stop_profiler`
+  1. Implement your code & test
+  2. `quilt.enable_report('OWNER', 'PACKAGE');`
+  3. `quilt.start_profiling('My Coverage Test')`
+  3. Run your test
+  4. `dbms_profiler.stop_profiling`
   5. Spool `ALL_SOURCE` from tested schemas to `<schema>.<objectType>.<objectName>.sql`
   6. Create [LCOV file](http://ltp.sourceforge.net/coverage/lcov/geninfo.1.php) from `PLSQL_PROFILER%` tables data - reference generated source files in `lcov.info` file
-  
-## Out of scope
 
-  * LCOV > HTML (should be able to use already existing tools)
+# Installation
 
-## Installation
+**1. Download required Oracle DB modules**
 
-  * Dependency - install tables for DBMS_PROFILER in schema
-  * Support Oracle 10g - 12c  
+SQLSN is light weight SQL*Plus Script Toolkit
 
-  1. Connect to target schema
-  2. @install
+````
+$ git clone https://github.com/principal-engineering/sqlsn.git oradb_modules/sqlsn
+````
 
-## Note
+**2. Grant required privileges to target schema**
+
+````
+grant connect to <quilt_schema>;  
+grant create table to <quilt_schema>;
+grant create procedure to <quilt_schema>;
+grant create type to <quilt_schema>;
+grant create sequence to <quilt_schema>;
+grant create view to <quilt_schema>;
+grant create synonym to <quilt_schema>
+````
+
+> Optionally create dedicated schema for Quilt
+>
+> * first connect to database using privileged user (for granted privileges see `application/create_production.sql`)
+> * then run `@create.sql production` script 
+
+**3. Connect to target schema and install Quilt objects**
+
+````
+SQL> @install production
+````
+
+# Note
 
   * SQL scripts are in directory Application/SQL_scripts
   * Gen lcov report on WINDOWS, use docker
@@ -37,7 +59,7 @@ It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#A
   4. create lcov report in docker container
     * run shell script docker_gen_script.sh
 
-## Example
+# Example
 
   Directory test show example use Quilt appication (Oracle 12c)
 
@@ -50,3 +72,39 @@ It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#A
     * stop profiling - @coverage_stop
     * export source from database - @coverage_export_all_src
     * create and export report (file lcov.info) - @coverage_export_report
+    
+# How to contribute
+
+## Setup development environment config
+
+Edit JSON file `config/env/development.js` with connection strings
+
+## Create develpment environment
+
+````
+$ sqlplus sys/oracle@local @create development
+````
+
+## Install Pete for testing
+
+Read more about Pete at github page
+https://github.com/principal-engineering/pete
+
+````
+$ git clone https://github.com/principal-engineering/pete.git oradb_modules/pete
+````
+
+## Write tests using Pete
+
+* Look at test folder for inspiration - it is super easy
+* Write tests for both singleschema and multischema scenarios
+    * singleschema deployment - when Quilt is deployed and executed from user that owns profiled objects
+    * multischema deployment - when Quilt is deployed in its own schema, and profiling user  is different
+* Implement your feature
+* Test & fix & rinse & repeate until all tests passed
+
+> PUll requests without tests will not be accepted (with exceptions for obvious reasons)
+
+# Credits
+
+* Henry Abeska
