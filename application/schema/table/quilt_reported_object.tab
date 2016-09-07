@@ -1,20 +1,23 @@
-create /*global temporary*/ table QUILT_REPORTED_OBJECT
+CREATE GLOBAL TEMPORARY TABLE quilt_reported_object
 (
-  owner       VARCHAR2(128) not null,
-  object_name VARCHAR2(128) not null,
-  object_type VARCHAR2(128) not null
-)
-on commit preserve rows;
+    owner        VARCHAR2(128) NOT NULL,
+    object_name  VARCHAR2(128) NOT NULL,
+    object_type  VARCHAR2(128) NOT NULL
+) 
+ON COMMIT PRESERVE ROWS
+;
 
-comment on table QUILT_REPORTED_OBJECT
+COMMENT ON TABLE QUILT_REPORTED_OBJECT
   is 'Objects that are reported in coverage report';
+COMMENT ON COLUMN QUILT_REPORTED_OBJECT.owner
+  is 'Reported object owner';
+COMMENT ON COLUMN QUILT_REPORTED_OBJECT.object_name
+  is 'Reported object owner';
+COMMENT ON COLUMN QUILT_REPORTED_OBJECT.object_type
+  is 'Reported object owner';
 
-comment on column QUILT_REPORTED_OBJECT.owner
-  is 'Reported object owner';
-comment on column QUILT_REPORTED_OBJECT.object_name
-  is 'Reported object owner';
-comment on column QUILT_REPORTED_OBJECT.object_type
-  is 'Reported object owner';
-
-alter table QUILT_REPORTED_OBJECT
-  add constraint QUILT_REPORTED_OBJECT_UK1 unique (OWNER, OBJECT_NAME, OBJECT_TYPE);
+ALTER TABLE quilt_reported_object
+    ADD CONSTRAINT quilt_repobj_pk
+    PRIMARY KEY(owner, object_name, object_type) 
+    USING INDEX COMPRESS 1
+;

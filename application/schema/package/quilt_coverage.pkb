@@ -148,7 +148,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
     END save_report;
 
     ----------------------------------------------------------------------------
-    PROCEDURE process_profiler_run(p_quilt_run_id IN NUMBER DEFAULT NULL) IS
+    PROCEDURE process_profiler_run(p_quilt_run_id IN NUMBER) IS
         lrec_quilt_run quilt_run%ROWTYPE;
         lrec_report    rcu_report%ROWTYPE;
         --
@@ -192,11 +192,12 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                 l_reportProcess.tag_fnda := quilt_lcov_lines();
                 l_reportProcess.tag_brda := quilt_lcov_lines();
                 l_reportProcess.tag_fnf  := 0;
+                l_reportProcess.tag_fnh  := 0;
                 l_reportProcess.tag_brf  := 0;
                 -- TN
                 l_reportProcess.tag_tn := lrec_quilt_run.test_name;
                 -- SF
-                l_reportProcess.tag_sf := './' || lrec_report.owner || '.' || lrec_report.name || '.' || lrec_report.type || '.sql';
+                l_reportProcess.tag_sf := '/tmp/report/src/' || lrec_report.owner || '.' || lrec_report.name || '.' || replace(lrec_report.type, ' ', '_') || '.sql';
                 quilt_logger.log_detail(': ' || p_quilt_run_id || ',' || lrec_report.quilt_run_id || ',' || lrec_report.name || ',' ||
                                         lrec_report.owner || ',' || lrec_report.type);
                 -- LH - lines hit
@@ -217,8 +218,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- FN:<line number of function start>,<function name>
                 BEGIN
-                    l_Name := quilt_util.getMethodName(lrec_report.text);
-                
+                    l_Name := quilt_util.getMethodName(lrec_report.text);                
                 EXCEPTION
                     WHEN OTHERS THEN
                         quilt_logger.log_detail(': FN: ' || SQLERRM);
@@ -226,19 +226,29 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                 END;
                 l_reportProcess.tag_fn.extend;
                 l_reportProcess.tag_fn(l_reportProcess.tag_fn.last) := lrec_report.line || ',' || l_Name;
+                -- TODO: has to solve overloads - if overloaded then add all_procedures.overload in parenths (1)
                 -- FNDA:<execution count>,<function name>
+                l_reportProcess.tag_fnda.extend;
+                l_reportProcess.tag_fnda(l_reportProcess.tag_fnda.last) := lrec_report.total_occur || ',' || l_Name;
             
                 -- FNF:<number of functions found>
-                l_reportProcess.tag_fnf := nvl(l_reportProcess.tag_fnf, 0) + 1;
+                -- l_reportProcess.tag_fnf := nvl(l_reportProcess.tag_fnf, 0) + 1;
+                l_reportProcess.tag_fnf := l_reportProcess.tag_fnf + 1;
                 -- FNH:<number of function hit>
-                l_reportProcess.tag_fnh := 0;
+                IF lrec_report.total_occur > 0 THEN
+                    l_reportProcess.tag_fnh := l_reportProcess.tag_fnh + 1;
+                END IF;
             END IF;
-            IF lower(lrec_report.text) LIKE '% if %' AND ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
+            IF (lower(lrec_report.text) LIKE '% if %' OR --
+               lower(lrec_report.text) LIKE '% elsif %' OR --
+               regexp_like(lrec_report.text, '(^|\s+)else(\s|$|[^a-z])', 'i') OR --
+               lower(lrec_report.text) LIKE '% when %') AND ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- BRDA:<line number>,<block number>,<branch number>,<taken>
                 l_reportProcess.tag_brda.extend;
                 -- todo ,1 -> counts blocks
+                -- TODO: else doesn't show correct total_occur - it has to be solved using lexer - finding line of next token which is not single line comment, whitespace, multiline comment and use its total_count
                 l_reportProcess.tag_brda(l_reportProcess.tag_brda.last) := lrec_report.line || ',1,' || l_branchCount || ',' ||
-                                                                           l_branchCount;
+                                                                           nvl(lrec_report.total_occur, 0);
                 l_branchCount := l_branchCount + 1;
                 -- BRF:<number of branches found>
                 l_reportProcess.tag_brf := nvl(l_reportProcess.tag_brf, 0) + 1;
@@ -269,7 +279,18 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                 CLOSE rcu_report;
             END IF;
     END process_profiler_run;
-    /*
+
+    ----------------------------------------------------------------------------
+    FUNCTION Report(p_quilt_run_id IN NUMBER) RETURN quilt_report IS
+        l_Result quilt_report;
+    BEGIN
+        SELECT quilt_report_item(Text) BULK COLLECT INTO l_Result FROM quilt_report_line WHERE quilt_run_id = p_quilt_run_id ORDER BY Line;
+        --
+        RETURN l_Result;
+        --
+    END;
+
+/*
            A tracefile is made up of several human-readable lines of text, divided
            into sections. If available, a tracefile begins with the testname which
            is stored in the following format:

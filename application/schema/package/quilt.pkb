@@ -12,15 +12,18 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         e_fkey_exists EXCEPTION;
         PRAGMA EXCEPTION_INIT(e_fkey_exists, -2275);
     BEGIN
+        quilt_logger.log_detail('begin:p_ddl=$1', p_ddl);
         EXECUTE IMMEDIATE p_ddl;
+        quilt_logger.log_detail('end');
     EXCEPTION
         WHEN e_name_alerady_used THEN
-            NULL;
+            quilt_logger.log_detail('end:object exists');
         WHEN e_fkey_exists THEN
-            NULL;
+            quilt_logger.log_detail('end:fkey exists');
         WHEN e_pkey_exists THEN
-            NULL;
+            quilt_logger.log_detail('end:pkey exists');
         WHEN OTHERS THEN
+            quilt_logger.log_detail('end:error=$1', SQLERRM);
             RAISE;
     END;
 
@@ -28,7 +31,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
     PROCEDURE ensure_profiler_objects_exist IS
     BEGIN
         -- NoFormat Start
-        -- Sequence
+        -- Sequence        
         exec_ddl(
             'create sequence PLSQL_PROFILER_RUNNUMBER' || chr(10) ||
             '  minvalue 1 maxvalue 9999999999999999999999999999' || chr(10) ||
@@ -152,6 +155,26 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         END IF;
     END;
 
+    ----------------------------------------------------------------------------
+    FUNCTION which_quilt_run_id(run_id IN NUMBER) RETURN NUMBER IS
+        l_Result       INTEGER;
+        l_current_user VARCHAR2(30);
+    BEGIN
+        quilt_logger.log_detail('begin:run_id=$1', run_id);
+        l_current_user := sys_context('USERENV', 'CURRENT_USER');
+        l_Result       := nvl(run_id, g_quilt_run_id);
+        IF l_Result IS NULL THEN
+            BEGIN
+                SELECT MAX(quilt_run_id) INTO l_Result FROM quilt_run WHERE profiler_user = l_current_user;
+            EXCEPTION
+                WHEN no_data_found THEN
+                    raise_application_error(-20000, quilt_util.formatString('No Quilt run for user $1 yet.', l_current_user));
+            END;
+        END IF;
+        quilt_logger.log_detail('end:return=$1', l_Result);
+        RETURN l_Result;
+    END;
+
     ------------------------------------------------------------------------
     PROCEDURE enable_report
     (
@@ -162,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
     BEGIN
         quilt_logger.log_detail('begin:owner=$1,object_name=$2,object_type=$3', OWNER, object_name, object_type);
         check_create_privilege(OWNER, object_name, object_type);
-        quilt_reported_objects.enable_report(quilt_util_cu.getObjectList(OWNER, object_name, object_type));        
+        quilt_reported_objects.enable_report(quilt_util_cu.getObjectList(OWNER, object_name, object_type));
         quilt_logger.log_detail('end');
     END enable_report;
 
@@ -180,63 +203,7 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         quilt_logger.log_detail('end');
     END disable_report;
 
-    ------------------------------------------------------------------------
-    FUNCTION start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER IS
-    BEGIN
-        quilt_logger.log_detail('begin');
-        --
-        ensure_profiler_objects_exist;
-        quilt_util_cu.setPLSQLOptimizeLevel(quilt_reported_objects.get_reported_objects);
-        --
-        g_quilt_run_id := quilt_util.next_run_id;
-        quilt_logger.log_start(p_quilt_run_id => g_quilt_run_id, p_test_name => p_test_name);
-        -- save sources
-        quilt_util_cu.save_reported_object_source(p_quilt_run_id => g_quilt_run_id,
-                                                  p_objects      => quilt_reported_objects.get_reported_objects);
-        -- start DBMS_PROFILER
-        dbms_profiler.start_profiler(run_comment  => to_char(SYSDATE, quilt_const.DATE_TIME_FM),
-                                     run_comment1 => p_test_name,
-                                     run_number   => g_profiler_run_id);
-        -- log start DBMS_PROFILER profiling
-        quilt_logger.log_profiler_run_id(p_quilt_run_id    => g_quilt_run_id,
-                                         p_profiler_run_id => g_profiler_run_id,
-                                         p_profiler_user   => sys_context('USERENV', 'CURRENT_USER'));
-        -- zapamatovat si v package context: test name
-        quilt_logger.log_detail('end');
-        --
-        RETURN g_quilt_run_id;
-        --
-    END start_profiling;
-
-    ------------------------------------------------------------------------
-    PROCEDURE start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) IS
-        l_runid NUMBER;
-    BEGIN
-        l_runid := start_profiling(p_test_name => p_test_name);
-    END start_profiling;
-
-    ------------------------------------------------------------------------
-    PROCEDURE stop_profiling IS
-    BEGIN
-        quilt_logger.log_detail('begin');
-        -- stop profilingu
-        dbms_profiler.stop_profiler;
-        quilt_util_cu.save_profiler_data(p_quilt_run_id => g_quilt_run_id, p_profiler_run_id => g_profiler_run_id);
-        -- zalogovat stop profilingu
-        quilt_logger.log_stop(p_quilt_run_id => g_quilt_run_id);
-        quilt_logger.log_detail('end');
-    END stop_profiling;
-
-    ------------------------------------------------------------------------
-    FUNCTION display_lcov(runid IN NUMBER DEFAULT NULL) RETURN quilt_report
-        PIPELINED IS
-    BEGIN
-        PIPE ROW(quilt_report_item('Not Implemented!'));
-        RETURN;
-    END;
-
     ----------------------------------------------------------------------------
-    -- TODO: move to view
     FUNCTION reported_objects RETURN quilt_object_list_type
         PIPELINED IS
         ltab_objects quilt_object_list_type;
@@ -244,6 +211,71 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         ltab_objects := quilt_reported_objects.get_reported_objects;
         FOR idx IN 1 .. ltab_objects.count LOOP
             PIPE ROW(ltab_objects(idx));
+        END LOOP;
+        RETURN;
+    END;
+
+    ------------------------------------------------------------------------
+    FUNCTION start_profiling(test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER IS
+    BEGIN
+        quilt_logger.log_detail('begin:test_name=$1', test_name);
+        --
+        ensure_profiler_objects_exist;
+        quilt_util_cu.setPLSQLOptimizeLevel(quilt_reported_objects.get_reported_objects);
+        --
+        g_quilt_run_id := quilt_util.next_run_id;
+        quilt_logger.log_start(p_quilt_run_id => g_quilt_run_id, p_test_name => test_name);
+        -- save sources
+        quilt_util_cu.save_reported_object_source(p_quilt_run_id => g_quilt_run_id,
+                                                  p_objects      => quilt_reported_objects.get_reported_objects);
+        -- start DBMS_PROFILER
+        dbms_profiler.start_profiler(run_comment  => to_char(SYSDATE, quilt_const.DATE_TIME_FM),
+                                     run_comment1 => test_name,
+                                     run_number   => g_profiler_run_id);
+        -- log start DBMS_PROFILER profiling
+        quilt_logger.log_profiler_run_id(p_quilt_run_id    => g_quilt_run_id,
+                                         p_profiler_run_id => g_profiler_run_id,
+                                         p_profiler_user   => sys_context('USERENV', 'CURRENT_USER'));
+        quilt_logger.log_detail('end');
+        --
+        RETURN g_quilt_run_id;
+        --
+    END start_profiling;
+
+    ------------------------------------------------------------------------
+    PROCEDURE start_profiling(test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) IS
+        l_runid NUMBER;
+    BEGIN
+        l_runid := start_profiling(test_name => test_name);
+    END start_profiling;
+
+    ------------------------------------------------------------------------
+    PROCEDURE stop_profiling IS
+    BEGIN
+        quilt_logger.log_detail('begin');
+        dbms_profiler.stop_profiler;
+        quilt_util_cu.save_profiler_data(p_quilt_run_id => g_quilt_run_id, p_profiler_run_id => g_profiler_run_id);
+        quilt_logger.log_stop(p_quilt_run_id => g_quilt_run_id);
+        quilt_logger.log_detail('end');
+    END stop_profiling;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE generate_report(run_id IN NUMBER DEFAULT NULL) IS
+    BEGIN
+        quilt_logger.log_detail('begin:run_id=$1', run_id);
+        quilt_coverage.process_profiler_run(which_quilt_run_id(run_id));
+        quilt_logger.log_detail('end');
+    END;
+
+    ------------------------------------------------------------------------
+    FUNCTION display_lcov(run_id IN NUMBER DEFAULT NULL) RETURN quilt_report
+        PIPELINED IS
+        l_quilt_run_id INTEGER;
+        l_Report       quilt_report;
+    BEGIN
+        l_Report := quilt_coverage.Report(which_quilt_run_id(run_id));
+        FOR Line IN 1 .. l_report.count LOOP
+            PIPE ROW(l_Report(Line));
         END LOOP;
         RETURN;
     END;

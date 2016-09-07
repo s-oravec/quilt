@@ -38,12 +38,13 @@ CREATE OR REPLACE PACKAGE quilt_util_cu AUTHID CURRENT_USER AS
     --
     -- %param p_owner schema name
     -- %param p_object_name object name
+    -- %param p_object_type object_type
     --
     FUNCTION getObjectList
     (
         p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2
+        p_object_name IN VARCHAR2 DEFAULT NULL,
+        p_object_type IN VARCHAR2 DEFAULT NULL
     ) RETURN quilt_object_list_type;
 
     PROCEDURE save_reported_object_source

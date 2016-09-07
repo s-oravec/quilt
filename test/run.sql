@@ -1,9 +1,6 @@
 prompt Recompile test packages with debug
 @@recompile_with_debug.sql
 
-
-
-
 rem Uncomment for easier debug
 rem exec pete_config.set_show_asserts(a_value_in => pete_config.g_ASSERTS_ALL);
 rem exec pete_config.set_show_hook_methods(a_value_in => true);

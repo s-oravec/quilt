@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_logger IS
     ) IS
         PRAGMA AUTONOMOUS_TRANSACTION;
         l_caller VARCHAR2(255);
-        l_msg    quilt_log.msg%Type;
+        l_msg    VARCHAR2(32767);
     BEGIN
         l_caller := quilt_util.getCallerQualifiedName;
         l_msg    := quilt_util.formatString(p_msg,
@@ -76,6 +76,11 @@ CREATE OR REPLACE PACKAGE BODY quilt_logger IS
         VALUES
             (quilt_log_id.nextval, g_quilt_run_id, l_caller, l_msg, systimestamp);
         COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            dbms_output.put_line('quilt_logger.log_detail failed: ' || SQLERRM);
+            dbms_output.put_line('l_caller' || substr(l_caller, 1, 50));
+            dbms_output.put_line('l_msg' || substr(l_msg, 1, 50));
     END log_detail;
 
 END quilt_logger;

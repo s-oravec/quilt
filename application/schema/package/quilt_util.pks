@@ -11,21 +11,7 @@ CREATE OR REPLACE PACKAGE quilt_util IS
     --
     FUNCTION getMethodName(p_textLine IN VARCHAR2) RETURN VARCHAR2;
 
-    /* -- Gets object (schemaName, objectName, objectType) from ALL_OBJECTS that match passed values using SQL LIKE expression with "\" as escape character
-        --
-        -- %param p_owner schema name
-        -- %param p_object_name object name
-        --
-        -- %return found quilt_object_type object or NULL when not found
-        -- 
-        FUNCTION getObject
-        (
-            p_owner       IN VARCHAR2,
-            p_object_name IN VARCHAR2
-        ) RETURN quilt_object_type;
-    */
-
-    -- TODO move somewhere else   
+    -- TODO move somewhere else
     Type typ_profiler_data_tab IS TABLE OF quilt_profiler_data%ROWTYPE;
     PROCEDURE save_profiler_data(p_data IN typ_profiler_data_tab);
 

@@ -9,11 +9,13 @@ CREATE OR REPLACE PACKAGE BODY quilt_reported_objects AS
             raise_application_error(-20000, 'No objects found matching specified selection criteria.');
         END IF;
         --
+        quilt_logger.log_detail('enabling report for additional $1 objects', p_objects.count);
         MERGE INTO quilt_reported_object t
         USING (SELECT * FROM TABLE(p_objects)) s
         ON (s.owner = t.owner AND s.object_name = t.object_name AND s.object_type = t.object_type)
         WHEN NOT MATCHED THEN
             INSERT (OWNER, object_name, object_type) VALUES (s.owner, s.object_name, s.object_type);
+        quilt_logger.log_detail('enabled report for another $1 objects', SQL%RowCount);
         COMMIT;
         quilt_logger.log_detail('end');
     EXCEPTION
@@ -32,7 +34,9 @@ CREATE OR REPLACE PACKAGE BODY quilt_reported_objects AS
             raise_application_error(-20000, 'No objects found matching specified selection criteria.');
         END IF;
         --
+        quilt_logger.log_detail('disabling report for $1 objects', p_objects.count);
         DELETE FROM quilt_reported_object WHERE (OWNER, object_name, object_type) IN (SELECT * FROM TABLE(p_objects));
+        quilt_logger.log_detail('disabled report for $1 objects', SQL%RowCount);
         COMMIT;
         quilt_logger.log_detail('end');
     EXCEPTION

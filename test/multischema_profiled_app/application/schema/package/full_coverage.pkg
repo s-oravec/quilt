@@ -1,0 +1,118 @@
+CREATE OR REPLACE PACKAGE full_coverage AS
+
+    PROCEDURE with_inlined_procedure;
+
+    PROCEDURE if_statement;
+
+    PROCEDURE case_statement;
+
+    PROCEDURE init_in_declare;
+
+    PROCEDURE while_loop;
+
+    PROCEDURE all_if_branches(P INTEGER);
+
+    PROCEDURE all_case_branches(P INTEGER);
+
+    PROCEDURE all_methods;
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY full_coverage AS
+
+    -- TODO: implement parsing for identification of forward declarations 
+    -- procedure private_procedure;
+
+    g_counter INTEGER := 0;
+
+    -- single line comment
+
+    /* 
+       multiline comment
+    */
+
+    PROCEDURE private_procedure IS
+    BEGIN
+        g_counter := g_counter + 1;
+    END;
+
+    PROCEDURE with_inlined_procedure IS
+        PROCEDURE inlined_procedure IS
+        BEGIN
+            g_counter := g_counter + 1;
+        END;
+    BEGIN
+        inlined_procedure;
+    END;
+
+    PROCEDURE if_statement IS
+    BEGIN
+        IF TRUE THEN
+            g_counter := g_counter + 1;
+        END IF;
+    END;
+
+    PROCEDURE case_statement IS
+    BEGIN
+        CASE
+            WHEN TRUE THEN
+                g_counter := g_counter + 1;
+        END CASE;
+    END;
+
+    PROCEDURE init_in_declare IS
+        l_increment INTEGER := 1;
+    BEGIN
+        g_counter := g_counter + l_increment;
+    END;
+
+    PROCEDURE while_loop IS
+        l_counter_plus_one INTEGER;
+    BEGIN
+        l_counter_plus_one := g_counter + 1;
+        WHILE g_counter < l_counter_plus_one LOOP
+            g_counter := g_counter + 1;
+        END LOOP;
+    END;
+
+    PROCEDURE all_if_branches(P INTEGER) IS
+    BEGIN
+        IF P = 0 THEN
+            g_counter := g_counter + 1;
+        ELSIF P = 1 THEN
+            g_counter := g_counter + 1;
+        ELSE
+            g_counter := g_counter + 1;
+        END IF;
+    END;
+
+    PROCEDURE all_case_branches(P INTEGER) IS
+    BEGIN
+        CASE P
+            WHEN 0 THEN
+                g_counter := g_counter + 1;
+            WHEN 1 THEN
+                g_counter := g_counter + 1;
+            ELSE
+                g_counter := g_counter + 1;
+        END CASE;
+    END;
+
+    PROCEDURE all_methods IS
+    BEGIN
+        private_procedure;
+        with_inlined_procedure;
+        if_statement;
+        case_statement;
+        init_in_declare;
+        while_loop;
+        all_if_branches(0);
+        all_if_branches(1);
+        all_if_branches(2);
+        all_case_branches(0);
+        all_case_branches(1);
+        all_case_branches(2);
+    END;
+
+END;
+/

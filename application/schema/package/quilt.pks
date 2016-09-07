@@ -40,19 +40,25 @@ CREATE OR REPLACE PACKAGE quilt AUTHID CURRENT_USER IS
     --
     -- %return Quilt run_id
     --
-    FUNCTION start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER;
-    PROCEDURE start_profiling(p_test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME);
+    FUNCTION start_profiling(test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME) RETURN NUMBER;
+    PROCEDURE start_profiling(test_name IN VARCHAR2 DEFAULT DEFAULT_TEST_NAME);
 
     -- Stops profiling
     --
     PROCEDURE stop_profiling;
 
+    -- Generate report
+    --
+    -- %param run_id Quilt run id returned by start_profiling function; default is last run id
+    --
+    PROCEDURE generate_report(run_id IN NUMBER DEFAULT NULL);
+
     -- returns lines of report formated as LCOV report identified by runid - returned by start_profiling
     -- if no runid is passed then last report within session is displayed
     --
-    -- %param runid DBMS_PROFILER runid
+    -- %param run_id Quilt run id returned by start_profiling function; default is last run id
     --
-    FUNCTION display_lcov(runid IN NUMBER DEFAULT NULL) RETURN quilt_report
+    FUNCTION display_lcov(run_id IN NUMBER DEFAULT NULL) RETURN quilt_report
         PIPELINED;
 
 END quilt;

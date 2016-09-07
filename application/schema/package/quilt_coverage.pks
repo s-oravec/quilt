@@ -7,7 +7,9 @@ CREATE OR REPLACE PACKAGE quilt_coverage IS
     --
     -- %param p_quilt_run_id 
     --
-    PROCEDURE process_profiler_run(p_quilt_run_id IN NUMBER DEFAULT NULL);
+    PROCEDURE process_profiler_run(p_quilt_run_id IN NUMBER);
+
+    FUNCTION Report(p_quilt_run_id IN NUMBER) RETURN quilt_report;
 
 END quilt_coverage;
 /

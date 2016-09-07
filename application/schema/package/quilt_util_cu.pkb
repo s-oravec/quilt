@@ -1,41 +1,15 @@
 CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
 
     ----------------------------------------------------------------------------
-    FUNCTION getObject
-    (
-        p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2
-    ) RETURN quilt_object_type IS
-        lobj_result quilt_object_type;
-    BEGIN
-        quilt_logger.log_detail('begin: p_owner=$1, p_object_name=$2', p_owner, p_object_name);
-        --
-        BEGIN
-            SELECT quilt_object_type(OWNER, object_name, object_type)
-              INTO lobj_result
-              FROM all_objects
-             WHERE OWNER LIKE '%' || upper(p_owner) || '%'
-               AND object_name LIKE '%' || upper(p_object_name) || '%';
-        EXCEPTION
-            WHEN no_data_found THEN
-                quilt_logger.log_detail('not found');
-                lobj_result := NULL;
-        END;
-        --    
-        quilt_logger.log_detail('end');
-        RETURN lobj_result;
-        --
-    END getObject;
-
-    ----------------------------------------------------------------------------
     FUNCTION getObjectList
     (
         p_owner       IN VARCHAR2,
-        p_object_name IN VARCHAR2,
-        p_object_type IN VARCHAR2
+        p_object_name IN VARCHAR2 DEFAULT NULL,
+        p_object_type IN VARCHAR2 DEFAULT NULL
     ) RETURN quilt_object_list_type IS
         ltab_result quilt_object_list_type;
     BEGIN
+        quilt_logger.log_detail('begin:p_owner=$1,p_object_name=$2,p_object_type=$3', p_owner, p_object_name, p_object_type);
         SELECT quilt_object_type(obj.OWNER, obj.object_name, obj.object_type)
           BULK COLLECT
           INTO ltab_result
@@ -161,16 +135,16 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
                                                   p_level       => p_level);
                     ELSE
                         quilt_logger.log_detail('$1 $2.$3 already has level=$4',
-                                                p_objects(idx).object_type,
-                                                p_objects(idx).owner,
-                                                p_objects(idx).object_name,
+                                                p_objects                     (idx).object_type,
+                                                p_objects                     (idx).owner,
+                                                p_objects                     (idx).object_name,
                                                 l_level);
                     END IF;
                 ELSE
                     quilt_logger.log_detail('Object $1 $2.$3 does not exist.',
-                                            p_objects(idx).object_type,
-                                            p_objects(idx).owner,
-                                            p_objects(idx).object_name);
+                                            p_objects                       (idx).object_type,
+                                            p_objects                       (idx).owner,
+                                            p_objects                       (idx).object_name);
                 END IF;
             END LOOP;
         EXCEPTION

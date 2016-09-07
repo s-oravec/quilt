@@ -1,15 +1,15 @@
-create or replace package tested_package as
+CREATE OR REPLACE PACKAGE tested_package AS
 
-  procedure test;
+    PROCEDURE test;
 
-end;
+END;
 /
-create or replace package body tested_package as
+CREATE OR REPLACE PACKAGE BODY tested_package AS
 
-  procedure test is
-  begin
-    null;
-  end;
+    PROCEDURE test IS
+    BEGIN
+        dbms_output.put_line($$PLSQL_UNIT_OWNER || '.' || $$PLSQL_UNIT || '.test');
+    END;
 
-end;
+END;
 /

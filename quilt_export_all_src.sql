@@ -16,10 +16,8 @@ SET HEADING OFF
 SET AUTO OFF
 SET TERM OFF
 
-SELECT DISTINCT '@@coverage_export_src '|| object_schema ||' '|| object_name ||' "'|| object_type ||'"'
-FROM quilt_methods
-WHERE sid = quilt_core_pkg.get_SID
-AND sessionid = quilt_core_pkg.get_SESSIONID;
+SELECT DISTINCT '@@coverage_export_src '|| owner ||' '|| object_name ||' "'|| object_type ||'" '
+FROM table(quilt.reported_objects);
 SPOOL OFF
 
 -- execute export src

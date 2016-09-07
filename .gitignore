@@ -6,3 +6,12 @@
 /**/*.~*
 w
 /node_modules/
+/_src_export.sql
+
+
+/report/html/*
+!/report/html/readme.md
+/report/src/*
+!/report/src/readme.md
+
+/report/lcov.info

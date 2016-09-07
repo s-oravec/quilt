@@ -1,13 +1,12 @@
 #/bin/bash
 
-if [ -f  lcov.info ]
+# linux/mac
+if [ -f  report/lcov.info ]
 then
 echo "Gen lcov report"
-cp lcov.info tmp_lcov.info
-tr -d '\r' <tmp_lcov.info > lcov.info
 X1=`pwd`
-sed -e 's#\.#'$X1'#' lcov.info > lcov_.info
-genhtml -s -o $X1 --function-coverage --branch-coverage lcov_.info
+# sed -e 's#\.#'$X1'#' lcov.info > lcov.info
+genhtml -s -o $X1/report/html --function-coverage --branch-coverage report/lcov.info
 else
-echo "Not lcov.info at directory"
-fi 
+echo "report/lcov.info not found"
+fi
