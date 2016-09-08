@@ -49,7 +49,7 @@ exit
 
 **1. Download required Oracle DB modules**
 
-SQLSN is light weight SQL*Plus Script Toolkit
+[SQLSN](https://github.com/s-oravec/sqlsn) is light weight SQL*Plus Script Toolkit
 
 ````
 $ git clone https://github.com/principal-engineering/sqlsn.git oradb_modules/sqlsn
@@ -132,7 +132,7 @@ $ git clone https://github.com/principal-engineering/pete.git oradb_modules/pete
 * Implement your feature
 * Test & fix & rinse & repeate until all tests passed
 
-> PUll requests without tests will not be accepted (with exceptions for obvious reasons)
+> Pull requests without tests will not be accepted (with exceptions for obvious reasons)
 
 ## Grunt task runner
 
