@@ -82,11 +82,14 @@ rem Export sources of reported objects into report/src
 
 rem First build docker container with LCOV
 host docker build -t lcov .
+
 rem Then start docker container and mount pwd to /tmp
 host docker run -itd --name quilt-lcov -v `pwd`:/tmp lcov /bin/bash
+
 rem And generate HTML report
 host docker exec quilt-lcov /tmp/docker_gen_script.sh
 
+rem Open report in your web browser
 host open report/html/index.html
 
 exit

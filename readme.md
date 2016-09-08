@@ -1,17 +1,49 @@
 # Quilt - PL/SQL code coverage tool
 
-Quilt is PL/SQL code coverage tool written in PL/SQL and SQL*Plus.
-It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#ARPLS039) supplied with Oracle Database
+Quilt is PL/SQL CodeCoverage tool written in PL/SQL and SQL*Plus.
+It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#ARPLS039) supplied with Oracle Database and generates HTML report using [LCOV](http://ltp.sourceforge.net/coverage/lcov.php)
 
-# How it works (will work)
+# How it works
 
-  1. Implement your code & test
-  2. `quilt.enable_report('OWNER', 'PACKAGE');`
-  3. `quilt.start_profiling('My Coverage Test')`
-  3. Run your test
-  4. `dbms_profiler.stop_profiling`
-  5. Spool `ALL_SOURCE` from tested schemas to `<schema>.<objectType>.<objectName>.sql`
-  6. Create [LCOV file](http://ltp.sourceforge.net/coverage/lcov/geninfo.1.php) from `PLSQL_PROFILER%` tables data - reference generated source files in `lcov.info` file
+It is pretty obvious from this SQL*Plus script (excerpt from [`example.sql`](example.sql))
+
+````oracle-sql
+rem 1. Enable CodeCoverage report for objects
+exec quilt.enable_report(user);
+
+rem 2. Start profiling
+exec quilt.start_profiling;
+
+rem 3. Execute your tests
+exec pete.run(user);
+
+rem 4. Stop profiling
+exec quilt.stop_profiling;
+
+rem 5. Generate report from profiling data
+exec quilt.generate_report;
+
+rem 6. Export LCOV report into report/lcov.info file
+@@quilt_export_report.sql
+
+rem 7. Export sources of reported objects into report/src
+@@quilt_export_all_src.sql
+
+rem Now use LCOV bundled in Docker image (see Dockerfile for image definition)
+rem 8. First build docker container with LCOV
+host docker build -t lcov .
+
+rem 9. Then start docker container and mount pwd to /tmp
+host docker run -itd --name quilt-lcov -v `pwd`:/tmp lcov /bin/bash
+
+rem 10. And generate HTML report
+host docker exec quilt-lcov /tmp/docker_gen_script.sh
+
+rem 11. Open report in your web browser
+host open report/html/index.html
+
+exit
+````
 
 # Installation
 
@@ -37,7 +69,7 @@ grant create synonym to <quilt_schema>
 
 > Optionally create dedicated schema for Quilt
 >
-> * first connect to database using privileged user (for granted privileges see `application/create_production.sql`)
+> * first connect to database using privileged user (for granted privileges see [`application/create_production.sql`](application/create_production.sql))
 > * then run `@create.sql production` script 
 
 **3. Connect to target schema and install Quilt objects**
@@ -46,32 +78,29 @@ grant create synonym to <quilt_schema>
 SQL> @install production
 ````
 
-# Note
+# Docker on Windows
 
-  * SQL scripts are in directory Application/SQL_scripts
-  * Gen lcov report on WINDOWS, use docker
+## 1. Create Docker image using supplied [`Dockerfile`](Dockerfile)
 
-  1. copy source files, lcov.info file and shell script to <host direcory>
-  2. create docker image - linux Debian
-    * docker build -t my_debi <path to Dockerfile>, example:  docker build -t my_debi /c/Work/docker/debian/
-  3. start docker container
-    * docker run -i -t -P --name <my name> -v //<host directory>://<container directory> <image name>, example: docker run -i -t -P --name debi -v //c/Users/Henry://mnt my_debi
-  4. create lcov report in docker container
-    * run shell script docker_gen_script.sh
+````batch
+docker build -t lcov .
+````
+    
+## 2. Start Docker container
 
+````batch
+docker run -i -t -P --name quilt-lcov -v //%cd%://tmp lcov
+````
+    
+## 3. Execute docker_gen_script.sh within Docker container
+
+````batch
+docker exec quilt-lcov /tmp/docker_gen_script.sh
+````
+    
 # Example
 
-  Directory test show example use Quilt appication (Oracle 12c)
-
-  1. connect to databese - SQLPLUS (test directory)
-  2. @install.sql
-  3. @run.sql 
-    * set spying objects - exec quilt_codecoverage_pkg.set_SpyingObject('&schem','&obj_name','&obj_type') 
-    * start profiling - @coverage_start "Test name"
-    * run test - @test
-    * stop profiling - @coverage_stop
-    * export source from database - @coverage_export_all_src
-    * create and export report (file lcov.info) - @coverage_export_report
+See [example.sql](example.sql) for example of usage.
     
 # How to contribute
 
@@ -105,6 +134,32 @@ $ git clone https://github.com/principal-engineering/pete.git oradb_modules/pete
 
 > PUll requests without tests will not be accepted (with exceptions for obvious reasons)
 
+## Grunt task runner
+
+> use nodejs + npm + [Grunt](http://gruntjs.com) to automate some development and CI tasks
+> see [Gruntfile.js](Gruntfile.js) for all tasks
+
+**!!! Assumes development environment has been created**
+
+### Install packages defined in package.json
+
+````bash
+$ npm install
+````
+
+### Reinstall Quilt and Quilt tests
+
+````bash
+$ grunt reinstall reinstall_test
+````
+
+### Execute Pete tests
+
+````bash
+$ grunt test
+````
+
 # Credits
 
+* Štefan Oravec
 * Henry Abeska
