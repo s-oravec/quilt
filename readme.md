@@ -7,7 +7,7 @@ It uses [DBMS_PROFILER](http://docs.oracle.com/database/121/ARPLS/d_profil.htm#A
 
 It is pretty obvious from this SQL*Plus script (excerpt from [`example.sql`](example.sql))
 
-````oracle-sql
+````
 rem 1. Enable CodeCoverage report for objects
 exec quilt.enable_report(user);
 
@@ -82,19 +82,19 @@ SQL> @install production
 
 ## 1. Create Docker image using supplied [`Dockerfile`](Dockerfile)
 
-````batch
+````
 docker build -t lcov .
 ````
     
 ## 2. Start Docker container
 
-````batch
+````
 docker run -i -t -P --name quilt-lcov -v //%cd%://tmp lcov
 ````
     
 ## 3. Execute docker_gen_script.sh within Docker container
 
-````batch
+````
 docker exec quilt-lcov /tmp/docker_gen_script.sh
 ````
     
@@ -143,19 +143,19 @@ $ git clone https://github.com/principal-engineering/pete.git oradb_modules/pete
 
 ### Install packages defined in package.json
 
-````bash
+````
 $ npm install
 ````
 
 ### Reinstall Quilt and Quilt tests
 
-````bash
+````
 $ grunt reinstall reinstall_test
 ````
 
 ### Execute Pete tests
 
-````bash
+````
 $ grunt test
 ````
 
