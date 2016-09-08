@@ -7,17 +7,21 @@ DEFINE file_name = _src_export.sql
 PROMPT Prepare SQL script for export source codes
 SET TERM OFF
 spool &&file_name
-SET LINESIZE 80
-SET PAGESIZE 50000
-SET ECHO OFF
-SET FEEDBACK OFF
-SET VERIFY OFF
-SET HEADING OFF
-SET AUTO OFF
-SET TERM OFF
+set serveroutput on size unlimited format wrapped
+set trimspool on
+set linesize 4000
+set feedback off
+set heading off
+set auto off
+set trimspool on
+set long 32767
+set longchunk 32767
 
-SELECT DISTINCT '@@coverage_export_src '|| owner ||' '|| object_name ||' "'|| object_type ||'" '
-FROM table(quilt.reported_objects);
+column text format a255
+
+SELECT DISTINCT '@@coverage_export_src '|| owner ||' '|| object_name ||' "'|| object_type ||'" ' as text
+FROM table(quilt.reported_objects)
+ORDER BY 1;
 SPOOL OFF
 
 -- execute export src

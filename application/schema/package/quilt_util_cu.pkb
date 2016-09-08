@@ -21,7 +21,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_util_cu AS
                                quilt_const.OBJ_TYPE_TYPE_BODY,
                                quilt_const.OBJ_TYPE_PROCEDURE,
                                quilt_const.OBJ_TYPE_FUNCTION,
-                               quilt_const.OBJ_TYPE_TRIGGER);
+                               quilt_const.OBJ_TYPE_TRIGGER)
+         ORDER BY obj.owner, obj.object_type, obj.object_name;
         RETURN ltab_result;
     END getObjectList;
 

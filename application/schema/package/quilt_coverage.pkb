@@ -197,7 +197,8 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                 -- TN
                 l_reportProcess.tag_tn := lrec_quilt_run.test_name;
                 -- SF
-                l_reportProcess.tag_sf := '/tmp/report/src/' || lrec_report.owner || '.' || lrec_report.name || '.' || replace(lrec_report.type, ' ', '_') || '.sql';
+                l_reportProcess.tag_sf := '/tmp/report/src/' || lrec_report.owner || '/' || REPLACE(lrec_report.type, ' ', '_') || '/' ||
+                                          lrec_report.name || '.sql';
                 quilt_logger.log_detail(': ' || p_quilt_run_id || ',' || lrec_report.quilt_run_id || ',' || lrec_report.name || ',' ||
                                         lrec_report.owner || ',' || lrec_report.type);
                 -- LH - lines hit
@@ -218,7 +219,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
                ltrim(lower(lrec_report.text)) NOT LIKE '--%' THEN
                 -- FN:<line number of function start>,<function name>
                 BEGIN
-                    l_Name := quilt_util.getMethodName(lrec_report.text);                
+                    l_Name := quilt_util.getMethodName(lrec_report.text);
                 EXCEPTION
                     WHEN OTHERS THEN
                         quilt_logger.log_detail(': FN: ' || SQLERRM);

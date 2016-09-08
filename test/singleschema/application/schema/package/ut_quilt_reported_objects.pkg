@@ -84,7 +84,10 @@ CREATE OR REPLACE PACKAGE BODY ut_quilt_reported_objects AS
         SELECT Count(*) INTO l_enabled FROM TABLE(quilt.reported_objects);
         pete_assert.eq(l_enabled, l_enabled_objects.count);
         quilt_reported_objects.disable_report(l_disabled_objects);
+        -- ooooooooooooooo ... keep this here as it screws up CodeCoverage on itself
+        -- TODO: copy quilt_reported_objects on start profiling to some persistent table with quilt_run_id and then use this!!!
         SELECT Count(*) INTO l_enabled FROM TABLE(quilt.reported_objects);
+        quilt_reported_objects.enable_report(l_disabled_objects);
         pete_assert.eq(l_enabled, l_enabled_objects.count - l_disabled_objects.count, 'Specific object should be disabled for report');
     END;
 

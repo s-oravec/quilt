@@ -221,7 +221,9 @@ CREATE OR REPLACE PACKAGE BODY quilt AS
         quilt_logger.log_detail('begin:test_name=$1', test_name);
         --
         ensure_profiler_objects_exist;
-        quilt_util_cu.setPLSQLOptimizeLevel(quilt_reported_objects.get_reported_objects);
+        IF sys_context('USERENV', 'CURRENT_USER') != $$PLSQL_UNIT_OWNER THEN
+            quilt_util_cu.setPLSQLOptimizeLevel(quilt_reported_objects.get_reported_objects);
+        END IF;
         --
         g_quilt_run_id := quilt_util.next_run_id;
         quilt_logger.log_start(p_quilt_run_id => g_quilt_run_id, p_test_name => test_name);

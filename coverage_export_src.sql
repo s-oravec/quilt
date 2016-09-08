@@ -15,10 +15,14 @@ set feedback off
 set heading off
 set auto off
 set trimspool on
+set long 32767
+set longchunk 32767
 
 set term on
 prompt Spooling source of &l_object_type &l_owner..&l_object_name into file &l_file_name
 set term off
+
+column text format a255
 
 spool &l_file_name
 
