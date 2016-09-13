@@ -159,6 +159,20 @@ $ grunt reinstall reinstall_test
 $ grunt test
 ````
 
+# Roadmap
+
+* 0.1.0
+    * [x] build on top of `DBMS_PROFILER` result
+    * [x] create LCOV report
+    * [x] wrap genhtml for LCOV HTML report in Docker
+    * [x] provide [single script example](example.sql) with profiling, test and LCOV HTML report generation
+* 0.2.0
+    * [ ] fix issues caused by flawed `DBMS_PROFILER` report
+        * [x] implement PL/SQL Lexer
+        * [ ] implement PL/SQL "simple" parser - AST only for functions/procedures, branches, statements
+        * [ ] implement Object Type representation of profile
+        * [ ] generate LCOV report from Object Type representation
+
 # Credits
 
 * Štefan Oravec
