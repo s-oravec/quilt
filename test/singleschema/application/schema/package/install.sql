@@ -9,3 +9,6 @@ prompt .. Creating test package UT_QUILT_UTIL
 
 prompt .. Creating test package UT_QUILT_LEXER
 @@ut_quilt_lexer.pkg
+
+prompt .. Creating test package UT_QUILT_COVERAGE
+@@ut_quilt_coverage.pkg

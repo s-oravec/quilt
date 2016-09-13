@@ -9,3 +9,6 @@ drop package ut_quilt_util;
 
 prompt .. Dropping test package UT_QUILT_LEXER
 drop package ut_quilt_lexer;
+
+prompt .. Dropping test package UT_QUILT_COVERAGE
+drop package ut_quilt_coverage;

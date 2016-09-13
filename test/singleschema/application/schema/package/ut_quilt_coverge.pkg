@@ -1,0 +1,19 @@
+CREATE OR REPLACE PACKAGE ut_quilt_coverage AS
+
+    Description CONSTANT pete_types.typ_description := 'quilt_Coverage';
+
+    PROCEDURE ifBranchIsNotCorrectlyReported(D VARCHAR2 := 'if branch is not correctly reported');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_quilt_lexer AS
+
+    -- TODO: to correctly implement these tests the quilt has to be able to return some object as result of report
+    ----------------------------------------------------------------------------
+    PROCEDURE ifBranchIsNotCorrectlyReported(D VARCHAR2) IS
+    BEGIN
+        pete.set_method_description(D);
+    END;
+
+END;
+/
