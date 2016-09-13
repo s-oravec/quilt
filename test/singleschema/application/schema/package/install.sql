@@ -7,8 +7,8 @@ prompt .. Creating test package UT_QUILT_REPORTED_OBJECTS
 prompt .. Creating test package UT_QUILT_UTIL
 @@ut_quilt_util.pkg
 
-prompt .. Creating test package UT_QUILT_LEXER
-@@ut_quilt_lexer.pkg
+prompt .. Creating test package UT_PLEX_LEXER
+@@ut_plex_lexer.pkg
 
 prompt .. Creating test package UT_QUILT_COVERAGE
 @@ut_quilt_coverage.pkg

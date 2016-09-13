@@ -1,0 +1,90 @@
+CREATE OR REPLACE PACKAGE ut_plex_matchKeyword AS
+
+    Description CONSTANT pete_types.typ_description := 'plex_matchKeyword';
+
+    PROCEDURE keywordPrefixNotIngored(D VARCHAR2 := 'if keyword matched even as substring if allowedAsSubstring (default)');
+    PROCEDURE keywordPrefixIngored(D VARCHAR2 := 'if keyword not matched if not allowedAsSubstring');
+    PROCEDURE keywordMatchIfDelimited(D VARCHAR2 := 'keyword is matched if delimited by space, special or eof');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE keywordPrefixNotIngored(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := '.Test';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchKeyword := plex_matchKeyword(plex_lexer.tk_Dot, plex_lexer.tk_Dot);
+        l_matchWord    plex_matchWord := plex_matchWord();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        -- . is matched even as a prefix
+        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.token);
+        -- word Test is matched
+        l_matchedToken := l_matchWord.isMatch;
+        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq('Test', l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE keywordPrefixIngored(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := 'functionTest';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchKeyword := plex_matchKeyword(plex_lexer.kw_FUNCTION, plex_lexer.kw_FUNCTION, 'N');
+        l_matchWord    plex_matchWord := plex_matchWord();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        -- function keyword is not matched as prefix
+        pete_assert.this(l_matchedToken IS NULL);
+        -- word functionTest is matched
+        l_matchedToken := l_matchWord.isMatch;
+        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE keywordMatchIfDelimited(D VARCHAR2) IS
+        l_Text            VARCHAR2(255) := 'function.funcTion FUNCtion';
+        l_sourceLines     plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match           plex_matchKeyword := plex_matchKeyword(plex_lexer.kw_FUNCTION, plex_lexer.kw_FUNCTION, 'N');
+        l_matchDot        plex_matchKeyword := plex_matchKeyword(plex_lexer.tk_Dot, plex_lexer.tk_Dot);
+        l_matchWhiteSpace plex_matchWhiteSpace := plex_matchWhiteSpace();
+        l_matchedToken    plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('function', l_matchedToken.text);
+        --
+        l_matchedToken := l_matchDot.isMatch;
+        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.token);
+        pete_assert.eq('.', l_matchedToken.text);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('funcTion', l_matchedToken.text);
+        --
+        l_matchedToken := l_matchWhiteSpace.isMatch;
+        pete_assert.eq(plex_lexer.tk_WhiteSpace, l_matchedToken.token);
+        --
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq('FUNCtion', l_matchedToken.text);
+        --
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+END;
+/

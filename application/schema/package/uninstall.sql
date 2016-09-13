@@ -7,8 +7,8 @@ DROP PACKAGE quilt_util;
 prompt .. Dropping package QUILT_UTIL_CU
 DROP PACKAGE quilt_util_cu;
 
-prompt .. Dropping package QUILT_LEXER
-DROP PACKAGE quilt_lexer;
+prompt .. Dropping package PLEX_LEXER
+DROP PACKAGE plex_lexer;
 
 prompt .. Dropping package QUILT_LOGGER
 DROP PACKAGE quilt_logger;

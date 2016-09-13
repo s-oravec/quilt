@@ -1,0 +1,43 @@
+CREATE OR REPLACE PACKAGE ut_plex_matchMultilineComment AS
+
+    Description CONSTANT pete_types.typ_description := 'plex_matchMultilineComment';
+
+    PROCEDURE inSingleLine(D VARCHAR2 := 'multiline comment in single line is matched correctly');
+    PROCEDURE inMultiLines(D VARCHAR2 := 'multiline comment in multiple lines is matched correctly');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_plex_matchMultilineComment AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE inSingleLine(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := q'[/* tradaa */]';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchMultilineComment := plex_matchMultilineComment();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE inMultiLines(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := '/*' || chr(10) || 'tradaa' || chr(10) || '*/';
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('/*' || chr(10), 'tradaa'|| chr(10), '*/');
+        l_match        plex_matchMultilineComment := plex_matchMultilineComment();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+END;
+/

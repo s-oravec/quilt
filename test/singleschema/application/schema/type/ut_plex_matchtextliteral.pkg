@@ -1,0 +1,108 @@
+CREATE OR REPLACE PACKAGE ut_plex_matchtextliteral AS
+
+    Description CONSTANT pete_types.typ_description := 'plex_matchTextLiteral';
+
+    PROCEDURE shouldMatchSimple(D VARCHAR2 := 'should match simple string literal');
+    PROCEDURE shouldMatchEscaped(D VARCHAR2 := 'should match escaped string literal');
+    PROCEDURE shouldMatchNVarchar(D VARCHAR2 := 'should match NVarchar2 string literal');
+    PROCEDURE shouldMatchqLiteralPairDl(D VARCHAR2 := 'should match qLiteral with pair delimiters - [], (), {}, <>');
+    PROCEDURE shouldMatchqLiteralSnglDl(D VARCHAR2 := 'should match qLiteral with not pair delimiter e.g. |,^,..');
+    PROCEDURE shoulMatchWithClosDelimIn(D VARCHAR2 := 'should match qLiteral with closing delimiter not followed by ''');
+
+END;
+/
+CREATE OR REPLACE PACKAGE BODY ut_plex_matchtextliteral AS
+
+    ----------------------------------------------------------------------------
+    PROCEDURE shouldMatchSimple(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := q'['test']';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE shouldMatchEscaped(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := q'['te''st']';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE shouldMatchNVarchar(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := q'[n'test']';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+    
+    ----------------------------------------------------------------------------
+        PROCEDURE shouldMatchqLiteralPairDl(D  VARCHAR2) IS
+        l_Text         VARCHAR2(30) := 'q''[te''st]''';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+    
+    ----------------------------------------------------------------------------
+    PROCEDURE shouldMatchqLiteralSnglDl(D  VARCHAR2) IS
+        l_Text         VARCHAR2(30) := 'q''|te''st|''';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+    
+    ----------------------------------------------------------------------------
+    PROCEDURE shoulMatchWithClosDelimIn(D  VARCHAR2) IS
+        l_Text         VARCHAR2(30) := 'q''|t|e''st|''';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchTextLiteral := plex_matchTextLiteral();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        l_matchedToken := l_match.isMatch;
+        pete_assert.eq(plex_lexer.tk_TextLiteral, l_matchedToken.token);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+
+END;
+/

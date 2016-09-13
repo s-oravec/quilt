@@ -1,5 +1,60 @@
 CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
 
+    Type quilt_CodePosition IS RECORD(
+        Line    PLS_INTEGER,
+        lineIdx PLS_INTEGER);
+
+    Type quilt_Statement IS RECORD(
+        beginPosition quilt_CodePosition,
+        endPosition   quilt_CodePosition,
+        totalHits     PLS_INTEGER,
+        totalTime     PLS_INTEGER);
+    Type quilt_Statements IS TABLE OF quilt_Statement;
+
+    Type quilt_Branch IS RECORD(
+        beginPosition quilt_CodePosition,
+        totalHits     PLS_INTEGER,
+        totalTime     PLS_INTEGER);
+    Type quilt_Branches IS TABLE OF quilt_Branch;
+
+    Type quilt_Function IS RECORD(
+        Name             VARCHAR2(30),
+        overload         PLS_INTEGER,
+        parentUniqueName VARCHAR2(4000),
+        beginPosition    quilt_CodePosition,
+        totalHits        PLS_INTEGER,
+        totalTime        PLS_INTEGER,
+        statementList    quilt_Statements := quilt_Statements()
+        -- function getUniqueName(quilt_Function) (return name || - || overload)
+        );
+    Type quilt_Functions IS TABLE OF quilt_Function;
+
+    Type quilt_PLSQLObject IS RECORD(
+        OWNER        VARCHAR2(30),
+        object_name  VARCHAR2(30),
+        object_type  VARCHAR2(30),
+        functionList quilt_Functions := quilt_Functions(),
+        branchList   quilt_Branches := quilt_Branches()
+        -- lcov::SF (source file) (return /tmp/report/src/self.owner/self.object_type/self.object_name.sql)
+        -- lcov::FN (function + position list) (return foreach fce in functionList append to result fce.beginPosition.line,fce.getUniqueName )
+        -- lcov::FNDA (function + hits list) (return foreach fce in functionList append to result fce.totalHits,fce.getUniqueName )
+        -- lcov::FNF (function list count)
+        -- lcov::FNH (function + hits list count, where fce.totalHits > 0)
+        -- lcov::BRDA (branch + hits list) (return foreach branch in branchList append to result branch.beginPosition,1,index,branch.totalHits )
+        -- lcov::BRF (branch list count)
+        -- lcov::BRH (branch + hits list count, where branch.totalHits > 0)
+        -- lcov::DA (directly accessible) (foreach source line return line number, execution count [, checksum])
+        -- lcov::LH (lines hit)
+        -- lcov::LF (lines found)
+        );
+    Type quilt_PLSQLObjects IS TABLE OF quilt_PLSQLObject;
+
+    Type quilt_CoverageReport IS RECORD(
+        Name       VARCHAR2(255),
+        objectList quilt_PLSQLObjects := quilt_PLSQLObjects()
+        -- lcov::TN (return name)
+        );
+
     ----------------------------------------------------------------------------
     CURSOR rcu_report(p_quilt_run_id INTEGER) IS
         WITH plsql_profiler AS
@@ -141,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY quilt_coverage IS
         -- LF
         lproc_insRow(quilt_const.TAG_LF || p_object.tag_lf);
         -- EOR
-        lproc_insRow(quilt_const.TAG_EOR);    
+        lproc_insRow(quilt_const.TAG_EOR);
         p_object.idx := l_idx;
         COMMIT;
     END save_report;
