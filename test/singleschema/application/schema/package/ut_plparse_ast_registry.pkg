@@ -1,21 +1,20 @@
-CREATE OR REPLACE PACKAGE ut_plparse_ast_util AS
+CREATE OR REPLACE PACKAGE ut_plparse_ast_registry AS
 
-    Description CONSTANT pete_types.typ_description := 'plparse_AST_util';
+    Description CONSTANT pete_types.typ_description := 'plparse_AST_Registry';
 
     PROCEDURE before_each;
 
     PROCEDURE registerRegisters(D VARCHAR2 := 'register registers');
     PROCEDURE unregisterUnregisters(D VARCHAR2 := 'unregister unregisters');
-    PROCEDURE toStringStrings(D VARCHAR2 := 'toString correctly appends children toStrings');
 
 END;
 /
-CREATE OR REPLACE PACKAGE BODY ut_plparse_ast_util AS
+CREATE OR REPLACE PACKAGE BODY ut_plparse_ast_registry AS
 
     ----------------------------------------------------------------------------  
     PROCEDURE before_each IS
     BEGIN
-        plparse_ast_util.init;
+        plparse_ast_registry.initialize;
     END;
 
     ----------------------------------------------------------------------------  
@@ -26,13 +25,13 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_ast_util AS
         pete.set_method_description(D);
         l_ast := plparse_ast(plex_token(plex_lexer.tk_Asterix));
         pete_assert.is_null(l_ast.id_registry);
-        plparse_ast_util.register(l_ast);
+        plparse_ast_registry.register(l_ast);
         --
-        pete_assert.eq(plex_lexer.tk_Asterix, l_ast.token.token);
+        pete_assert.eq(plex_lexer.tk_Asterix, l_ast.token.tokenType);
         pete_assert.is_not_null(l_ast.id_registry);
         --
-        l_otherAst := plparse_ast_util.get_by_id(l_ast.id_registry);
-        pete_assert.eq(l_ast.token.token, l_otherAst.token.token);
+        l_otherAst := plparse_ast_registry.get_by_id(l_ast.id_registry);
+        pete_assert.eq(l_ast.token.tokenType, l_otherAst.token.tokenType);
     END;
 
     ----------------------------------------------------------------------------  
@@ -47,19 +46,19 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_ast_util AS
         --prepare
         --register 2 ASTs
         l_ast1 := plparse_ast(plex_token(plex_lexer.tk_Asterix));
-        plparse_ast_util.register(l_ast1);
+        plparse_ast_registry.register(l_ast1);
         l_id1  := l_ast1.id_registry;
         l_ast2 := plparse_ast(plex_token(plex_lexer.tk_LessThan));
-        plparse_ast_util.register(l_ast2);
+        plparse_ast_registry.register(l_ast2);
         l_id2 := l_ast2.id_registry;
         --test - unregister 1st
-        plparse_ast_util.unregister(l_ast1);
+        plparse_ast_registry.unregister(l_ast1);
         pete_assert.is_null(l_ast1.id_registry);
         --assert
         DECLARE
             someAST plparse_ast;
         BEGIN
-            someAST  := plparse_ast_util.get_by_id(l_id1);
+            someAST  := plparse_ast_registry.get_by_id(l_id1);
             l_thrown := FALSE;
         EXCEPTION
             WHEN OTHERS THEN
@@ -68,26 +67,6 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_ast_util AS
         pete_assert.this(l_thrown, 'get by id on unregistered AST should have thrown');
     END;
 
-    ----------------------------------------------------------------------------
-    PROCEDURE toStringStrings(D VARCHAR2) IS
-      l_ast plparse_ast;
-      l_child1 plparse_ast;
-      l_child2 plparse_ast;
-    BEGIN
-      pete.set_method_description(d);
-      --
-      l_ast := plparse_ast(plex_token(plex_lexer.tk_Asterix));
-      plparse_ast_util.register(l_ast);
-      l_child1 := plparse_ast(plex_token(plex_lexer.tk_Asterix));
-      plparse_ast_util.register(l_child1);
-      l_child2 := plparse_ast(plex_token(plex_lexer.tk_Asterix));
-      plparse_ast_util.register(l_child2);
-      l_ast.addChild(l_child1);
-      l_ast.addChild(l_child2);
-      --
-      pete_assert.eq('*(*,*)', l_ast.toString);
-      --
-    END;
 
 END;
 /

@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchMultilineComment AS
         pete.set_method_description(D);
         plex_lexer.initialize(l_sourceLines);
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.tokenType);
         pete_assert.eq(l_Text, l_matchedToken.text);
         pete_assert.this(plex_lexer.eof);
     END;
@@ -34,7 +34,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchMultilineComment AS
         pete.set_method_description(D);
         plex_lexer.initialize(l_sourceLines);
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_MultilineComment, l_matchedToken.tokenType);
         pete_assert.eq(l_Text, l_matchedToken.text);
         pete_assert.this(plex_lexer.eof);
     END;

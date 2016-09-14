@@ -21,3 +21,6 @@ drop package ut_plex_matchwhitespace;
 
 prompt .. Dropping package UT_PLEX_MATCHWORD
 drop package ut_plex_matchword;
+
+prompt .. Dropping package UT_PLPARSE_AST
+drop package ut_plparse_ast;

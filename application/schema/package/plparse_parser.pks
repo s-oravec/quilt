@@ -1,17 +1,20 @@
 CREATE OR REPLACE PACKAGE plparse_parser AS
 
+    -- AST Symbol Type Type
     SUBTYPE AstSymbolType IS VARCHAR2(30);
 
-    ast_PLSQLObjectBody CONSTANT AstSymbolType := 'PLSQLObjectBody';
+    -- AST Symbols    
+    ast_PackageBody     CONSTANT AstSymbolType := 'PackageBody';
+    ast_Procedure       CONSTANT AstSymbolType := 'Procedure';
+    ast_Function        CONSTANT AstSymbolType := 'Function';
+    ast_Block           CONSTANT AstSymbolType := 'Block';
+    ast_InnerBlock      CONSTANT AstSymbolType := 'InnerBlock';
+    ast_BlockDeclPart   CONSTANT AstSymbolType := 'BlockDeclPart';
+    ast_BlockCode       CONSTANT AstSymbolType := 'BlockCode';
+    ast_OtherDecl       CONSTANT AstSymbolType := 'OtherDecl';
+    ast_SimpleStatement CONSTANT AstSymbolType := 'SimpleStatement';
 
-    /* 
-    Initializes lexer and parser internals
-    
-    %param p_owner owner of the object
-    %param p_name object name
-    %param p_type object type
-    
-    */
+    -- initializes parser with object source
     PROCEDURE initialize
     (
         p_owner all_source.owner%Type,
@@ -19,25 +22,11 @@ CREATE OR REPLACE PACKAGE plparse_parser AS
         p_type  all_source.type%Type
     );
 
+    -- initializes parser with source lines    
     PROCEDURE initialize(p_source_lines IN plex_lexer.typ_source_text);
 
-    -- TokenStream methods
-    FUNCTION getIndex RETURN PLS_INTEGER;
-
-    FUNCTION currentToken RETURN plex_token;
-
-    PROCEDURE consume;
-
-    FUNCTION eof RETURN BOOLEAN;
-
-    FUNCTION peek(p_lookahead PLS_INTEGER) RETURN plex_token;
-
-    PROCEDURE takeSnapshot;
-
-    PROCEDURE rollbackSnapshot;
-
-    PROCEDURE commitSnapshot;
-    -- TokenStream methods
+    -- parse source lines and return root AST
+    FUNCTION parse RETURN plparse_ast;
 
 END;
 /

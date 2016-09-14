@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE ut_quilt_coverage AS
 
 END;
 /
-CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
+CREATE OR REPLACE PACKAGE BODY ut_quilt_coverage AS
 
     -- TODO: to correctly implement these tests the quilt has to be able to return some object as result of report
     ----------------------------------------------------------------------------

@@ -2,150 +2,65 @@ CREATE OR REPLACE PACKAGE ut_plparse_parser AS
 
     Description CONSTANT pete_types.typ_description := 'plparse_Parser';
 
-    Description CONSTANT pete_types.typ_description := 'plex_lexer';
-
-    PROCEDURE initializeWorksWithEmpty(D VARCHAR2 := 'initialize works with empty');
-    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2 := 'initialize works with non empty');
-
-    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2 := 'currentItem and consume works');
-
-    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2 := 'rollback without takeSnapshot throws');
-    PROCEDURE commitWOSnapshotThrows(D VARCHAR2 := 'commit without takeSnapshot throws');
-    PROCEDURE commitAfterSnapWorks(D VARCHAR2 := 'commit after takeSnapshot works');
-    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2 := 'rollback after takeSnapshot works');
+    PROCEDURE pkgBodyEmpty(D VARCHAR2 := 'Empty package body works');
+    PROCEDURE pkgBodyCursor(D VARCHAR2 := 'Package body with cursor declaration works');
+    PROCEDURE pkgBodyProcWOParams(D VARCHAR2 := 'Package body with procedure without works');
 
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
 
-    ----------------------------------------------------------------------------
-    PROCEDURE initializeWorksWithEmpty(D VARCHAR2) IS
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text();
+    ---------------------------------------------------------------------------- 
+    PROCEDURE pkgBodyEmpty(D VARCHAR2) IS
+        -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'package body pkgBodyEmpty as' || chr(10), 
+            'end;' || chr(10)
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
     BEGIN
         pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        pete_assert.eq(plex_lexer.tk_EOF, plparse_parser.currentToken().token);
-        pete_assert.eq(1, plparse_parser.getIndex);
-        pete_assert.this(plparse_parser.eof);
-        pete_assert.this(plparse_parser.peek(1) IS NULL);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody', l_ast.toString);
     END;
 
-    ----------------------------------------------------------------------------
-    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2) IS
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
+    ---------------------------------------------------------------------------- 
+    PROCEDURE pkgBodyCursor(D VARCHAR2) IS
+        -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'package body pkgBodyCursor as' || chr(10), 
+            '  cursor crs is' || chr(10), 
+            '    select '';'' as x ' || chr(10), 
+            '     from dual;'|| chr(10), 
+            'end;' || chr(10)
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
     BEGIN
         pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        pete_assert.eq(plex_lexer.kw_BEGIN, plparse_parser.currentToken().token);
-        pete_assert.eq(plex_lexer.kw_End, plparse_parser.peek(1).token);
-        pete_assert.eq(plex_lexer.tk_EOF, plparse_parser.peek(2).token);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody(BlockDeclPart(OtherDecl))', l_ast.toString);
     END;
 
-    ----------------------------------------------------------------------------
-    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2) IS
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
+    ---------------------------------------------------------------------------- 
+    PROCEDURE pkgBodyProcWOParams(D VARCHAR2) IS
+        -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'package body pkgBodyCursor as' || chr(10), 
+            '  procedure tradaa is' || chr(10),
+            '  begin null; end;' || chr(10),
+            'end;' || chr(10)
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
     BEGIN
         pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        pete_assert.eq(plex_lexer.kw_BEGIN, plparse_parser.currentToken().token);
-        pete_assert.eq(1, plparse_parser.getIndex);
-        plparse_parser.consume;
-        pete_assert.eq(2, plparse_parser.getIndex);
-        pete_assert.eq(plex_lexer.kw_End, plparse_parser.currentToken().token);
-    END;
-
-    ----------------------------------------------------------------------------
-    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2) IS
-        l_thrown      BOOLEAN := FALSE;
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
-    BEGIN
-        pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        BEGIN
-            plparse_parser.rollbackSnapshot;
-        EXCEPTION
-            WHEN OTHERS THEN
-                l_thrown := TRUE;
-        END;
-        --
-        pete_assert.this(l_thrown, 'plparse_parser.rollbackSnapshot should have thrown.');
-    END;
-
-    ----------------------------------------------------------------------------
-    PROCEDURE commitWOSnapshotThrows(D VARCHAR2) IS
-        l_thrown      BOOLEAN := FALSE;
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
-    BEGIN
-        pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        BEGIN
-            plparse_parser.commitSnapshot;
-        EXCEPTION
-            WHEN OTHERS THEN
-                l_thrown := TRUE;
-        END;
-        --
-        pete_assert.this(l_thrown, 'plparse_parser.commitSnapshot should have thrown.');
-    END;
-
-    ----------------------------------------------------------------------------
-    PROCEDURE commitAfterSnapWorks(D VARCHAR2) IS
-        l_thrown      BOOLEAN := FALSE;
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
-    BEGIN
-        pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        plparse_parser.takeSnapshot;
-        plparse_parser.consume;
-        plparse_parser.commitSnapshot;
-        -- consecutive rollback throws as stack is empty
-        BEGIN
-            plparse_parser.rollbackSnapshot;
-        EXCEPTION
-            WHEN OTHERS THEN
-                l_thrown := TRUE;
-        END;
-        --
-        pete_assert.this(l_thrown, 'plparse_parser.rollbackSnapshot should have thrown.');
-    END;
-
-    ----------------------------------------------------------------------------
-    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2) IS
-        l_thrown      BOOLEAN := FALSE;
-        l_indexBefore PLS_INTEGER;
-        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text('begin' || chr(10), 'end');
-    BEGIN
-        pete.set_method_description(D);
-        -- prepare
-        plparse_parser.initialize(p_source_lines => l_sourceLines);
-        --
-        plparse_parser.takeSnapshot;
-        l_indexBefore := plparse_parser.getIndex;
-        plparse_parser.consume;
-        plparse_parser.rollbackSnapshot;
-        -- indexe is restored to before take snapshot
-        pete_assert.eq(l_indexBefore, plparse_parser.getIndex);
-        -- consecutive rollback throws as stack is empty
-        BEGIN
-            plparse_parser.commitSnapshot;
-        EXCEPTION
-            WHEN OTHERS THEN
-                l_thrown := TRUE;
-        END;
-        --
-        pete_assert.this(l_thrown, 'plparse_parser.commitSnapshot should have thrown.');
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody(BlockDeclPart(Procedure(BlockCode(SimpleStatement))))', l_ast.toString);
     END;
 
 END;

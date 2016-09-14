@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchNumberLiteral AS
             -- token has been matched
             pete_assert.this(l_matchedToken IS NOT NULL, 'literal ' || g_numberLiterals(lineIdx) || ' has not been matched');
             -- it is number literal token
-            pete_assert.eq(plex_lexer.tk_NumberLiteral, l_matchedToken.token);
+            pete_assert.eq(plex_lexer.tk_NumberLiteral, l_matchedToken.tokenType);
             -- value matches the source line
             pete_assert.eq(substr(g_numberLiterals(lineIdx), 1, length(g_numberLiterals(lineIdx)) - 1), l_matchedToken.text);
             -- consume space serving as delimiter in source

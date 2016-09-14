@@ -1,6 +1,6 @@
-CREATE OR REPLACE PACKAGE plparse_ast_util AS
+CREATE OR REPLACE PACKAGE plparse_ast_registry AS
 
-    PROCEDURE init;
+    PROCEDURE initialize;
 
     PROCEDURE register(ast IN OUT NOCOPY plparse_ast);
 

@@ -43,6 +43,12 @@ prompt .. Creating type PLEX_MATCHWHITESPACE
 prompt .. Creating type PLEX_MATCHWORD
 @@plex_matchword.tps
 
+prompt .. Creating type PLPARSE_AST
+@@plparse_ast.tps
+
+prompt .. Creating type PLPARSE_ASTCHILDREN
+@@plparse_astchildren.tps
+
 prompt .. Creating type QUILT_LCOV_LINES
 @@quilt_lcov_lines.tps
 
@@ -104,3 +110,6 @@ prompt .. Creating type body QUILT_REPORT_PROCESS_TYPE
 
 prompt .. Creating type body PLEX_TOKEN
 @@plex_token.tpb
+
+prompt .. Creating type body PLPARSE_AST
+@@plparse_ast.tpb

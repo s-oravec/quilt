@@ -21,3 +21,6 @@ prompt .. Creating package UT_PLEX_MATCHWHITESPACE
 
 prompt .. Creating package UT_PLEX_MATCHWORD
 @@ut_plex_matchword.pkg
+
+prompt .. Creating package UT_PLPARSE_AST
+@@ut_plparse_ast.pkg

@@ -1,10 +1,10 @@
-CREATE OR REPLACE PACKAGE BODY plparse_ast_util AS
+CREATE OR REPLACE PACKAGE BODY plparse_ast_registry AS
 
     Type typ_ast_table IS TABLE OF plparse_ast;
     g_ast_registry typ_ast_table;
 
     ----------------------------------------------------------------------------
-    PROCEDURE init IS
+    PROCEDURE initialize IS
     BEGIN
         g_ast_registry := typ_ast_table();
     END;

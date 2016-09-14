@@ -23,10 +23,10 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         --
         l_matchedToken := l_match.isMatch;
         -- . is matched even as a prefix
-        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.tokenType);
         -- word Test is matched
         l_matchedToken := l_matchWord.isMatch;
-        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.tokenType);
         pete_assert.eq('Test', l_matchedToken.text);
         pete_assert.this(plex_lexer.eof);
     END;
@@ -47,7 +47,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         pete_assert.this(l_matchedToken IS NULL);
         -- word functionTest is matched
         l_matchedToken := l_matchWord.isMatch;
-        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.tokenType);
         pete_assert.eq(l_Text, l_matchedToken.text);
         pete_assert.this(plex_lexer.eof);
     END;
@@ -65,22 +65,22 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         plex_lexer.initialize(l_sourceLines);
         --
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.tokenType);
         pete_assert.eq('function', l_matchedToken.text);
         --
         l_matchedToken := l_matchDot.isMatch;
-        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_Dot, l_matchedToken.tokenType);
         pete_assert.eq('.', l_matchedToken.text);
         --
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.tokenType);
         pete_assert.eq('funcTion', l_matchedToken.text);
         --
         l_matchedToken := l_matchWhiteSpace.isMatch;
-        pete_assert.eq(plex_lexer.tk_WhiteSpace, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.tk_WhiteSpace, l_matchedToken.tokenType);
         --
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.token);
+        pete_assert.eq(plex_lexer.kw_FUNCTION, l_matchedToken.tokenType);
         pete_assert.eq('FUNCtion', l_matchedToken.text);
         --
         pete_assert.this(plex_lexer.eof);

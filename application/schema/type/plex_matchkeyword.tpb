@@ -3,13 +3,13 @@ CREATE OR REPLACE Type BODY plex_matchkeyword AS
     ----------------------------------------------------------------------------  
     CONSTRUCTOR FUNCTION plex_matchkeyword
     (
-        token            IN VARCHAR2,
+        tokenType        IN VARCHAR2,
         stringToMatch    IN VARCHAR2,
         allowAsSubstring IN VARCHAR2 DEFAULT 'Y'
     ) RETURN SELF AS Result IS
     BEGIN
         --
-        self.token            := token;
+        self.tokenType        := tokenType;
         self.stringToMatch    := stringToMatch;
         self.allowAsSubstring := allowAsSubstring;
         --
@@ -37,7 +37,7 @@ CREATE OR REPLACE Type BODY plex_matchkeyword AS
             l_found := TRUE;
         END IF;
         IF l_found THEN
-            RETURN NEW plex_token(self.token, l_Text);
+            RETURN NEW plex_token(self.tokenType, l_Text);
         END IF;
         RETURN NULL;
     END;

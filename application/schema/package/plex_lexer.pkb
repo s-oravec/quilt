@@ -51,13 +51,12 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         --
         -- add special characters matchers    
         FOR idx IN 1 .. g_specialCharacterTokens.count LOOP
-            appendMatcher(NEW plex_matchKeyword(token => g_specialCharacterTokens(idx), stringToMatch => g_specialCharacterTokens(idx)));
+            appendMatcher(NEW plex_matchKeyword(g_specialCharacterTokens(idx), g_specialCharacterTokens(idx)));
         END LOOP;
         --
         -- add keyword matchers
         FOR idx IN 1 .. g_keywordTokens.count LOOP
-            appendMatcher(NEW
-                          plex_matchKeyword(token => g_keywordTokens(idx), stringToMatch => g_keywordTokens(idx), allowAsSubstring => 'N'));
+            appendMatcher(NEW plex_matchKeyword(g_keywordTokens(idx), g_keywordTokens(idx), allowAsSubstring => 'N'));
         END LOOP;
         --
         -- add whitespace matcher
@@ -239,8 +238,9 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         l_Result plex_token;
     BEGIN
         l_Result := nextTokenImpl();
-        WHILE l_Result IS NOT NULL AND l_result.token != tk_EOF LOOP
-            IF l_result.token != tk_WhiteSpace THEN
+        WHILE l_Result IS NOT NULL AND l_result.tokenType != tk_EOF LOOP
+            -- TODO: make this strip of whitespace/comments optional using parameter
+            IF l_result.tokenType not in (tk_WhiteSpace, tk_SingleLineComment, tk_MultilineComment) THEN
                 RETURN l_Result;
             END IF;
             l_Result := nextTokenImpl;
@@ -261,7 +261,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         LOOP
             l_Result.extend;
             l_Result(l_Result.count) := plex_lexer.nextToken;
-            EXIT WHEN l_Result(l_Result.count).token = plex_lexer.tk_EOF;
+            EXIT WHEN l_Result(l_Result.count).tokenType = plex_lexer.tk_EOF;
         END LOOP;
         RETURN l_Result;
     END;

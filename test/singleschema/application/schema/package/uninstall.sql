@@ -12,3 +12,6 @@ drop package ut_plex_lexer;
 
 prompt .. Dropping test package UT_QUILT_COVERAGE
 drop package ut_quilt_coverage;
+
+prompt .. Dropping test package UT_PLPARSE_AST_REGISTRY
+drop package ut_plparse_ast_registry;

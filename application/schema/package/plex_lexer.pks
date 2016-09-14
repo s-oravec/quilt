@@ -1,5 +1,7 @@
 CREATE OR REPLACE PACKAGE plex_lexer AS
 
+    -- TODO: split plex_lexer into plex_LexemeStream and plex_Lexer
+
     -- keywords
     SUBTYPE TokenType IS VARCHAR2(30);
 
@@ -112,6 +114,21 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     kw_WHERE      CONSTANT TokenType := 'WHERE';
     kw_WITH       CONSTANT TokenType := 'WITH';
 
+    -- reserved words
+    rw_BODY     CONSTANT TokenType := 'BODY';
+    rw_CLOSE    CONSTANT TokenType := 'CLOSE';
+    rw_CONTINUE CONSTANT TokenType := 'CONTINUE';
+    rw_EXECUTE  CONSTANT TokenType := 'EXECUTE';
+    rw_EXIT     CONSTANT TokenType := 'EXIT';
+    rw_FORALL   CONSTANT TokenType := 'FORALL';
+    rw_MERGE    CONSTANT TokenType := 'MERGE';
+    rw_OPEN     CONSTANT TokenType := 'OPEN';
+    rw_PACKAGE  CONSTANT TokenType := 'PACKAGE';
+    rw_PIPE     CONSTANT TokenType := 'PIPE';
+    rw_PRAGMA   CONSTANT TokenType := 'PRAGMA';
+    rw_RAISE    CONSTANT TokenType := 'RAISE';
+    rw_RETURN   CONSTANT TokenType := 'RETURN';
+
     -- special tokens
     tk_WhiteSpace        CONSTANT TokenType := '<WhiteSpace>';
     tk_EOF               CONSTANT TokenType := '<EOF>';
@@ -122,7 +139,7 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     tk_Word              CONSTANT TokenType := '<Word>';
 
     ----------------------------------------------------------------------------  
-    -- Tokenizer methods
+    -- Exposed LexemeTokenizer methods
     ----------------------------------------------------------------------------  
     FUNCTION getIndex RETURN PLS_INTEGER;
     FUNCTION getLine RETURN PLS_INTEGER;
@@ -145,7 +162,6 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     );
 
     PROCEDURE initialize(p_source_lines IN typ_source_text);
-    --function initialize(p_source_lines IN typ_source_text) return plex_matchers;
 
     FUNCTION currentItem RETURN VARCHAR2;
 
