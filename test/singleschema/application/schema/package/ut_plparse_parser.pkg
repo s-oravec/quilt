@@ -4,8 +4,8 @@ CREATE OR REPLACE PACKAGE ut_plparse_parser AS
 
     PROCEDURE pkgBodyEmpty(D VARCHAR2 := 'Empty package body works');
     PROCEDURE pkgBodyCursor(D VARCHAR2 := 'Package body with cursor declaration works');
-    PROCEDURE pkgBodyProcWOParams(D VARCHAR2 := 'Package body with procedure without works');
-
+    PROCEDURE pkgBodyProcWOParams(D VARCHAR2 := 'Package body with procedure without params works');
+    PROCEDURE pkgBodyProcWParams(D VARCHAR2 := 'Package body with procedure with params works');
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
@@ -44,12 +44,12 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         l_ast := plparse_parser.parse;
         pete_assert.eq('PackageBody(BlockDeclPart(OtherDecl))', l_ast.toString);
     END;
-
+    
     ---------------------------------------------------------------------------- 
     PROCEDURE pkgBodyProcWOParams(D VARCHAR2) IS
         -- NoFormat Start
         l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
-            'package body pkgBodyCursor as' || chr(10), 
+            'package body pkgBodyProcWOParams as' || chr(10), 
             '  procedure tradaa is' || chr(10),
             '  begin null; end;' || chr(10),
             'end;' || chr(10)
@@ -62,6 +62,34 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         l_ast := plparse_parser.parse;
         pete_assert.eq('PackageBody(BlockDeclPart(Procedure(BlockCode(SimpleStatement))))', l_ast.toString);
     END;
+
+    ---------------------------------------------------------------------------- 
+    PROCEDURE pkgBodyProcWParams(D VARCHAR2) IS
+        -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'package body pkgBodyProcWParams as' || chr(10), 
+            '  procedure tradaa (' || chr(10),
+            '    p_in  in integer,' || chr(10),
+            '    p_inout in out integer,' || chr(10),
+            '    p_out out integer,' || chr(10),
+            '    p_colref in table.column%type,' || chr(10),
+            '    p_rowref in table%rowtype,' || chr(10),
+            '    p_type in owner.type,' || chr(10),
+            '    p_typeinpkg in owner.package.type,' || chr(10),
+            '    p_crsout out sys_refcursor,' || chr(10),
+            '  ) is' || chr(10),
+            '  begin null; end;' || chr(10),
+            'end;' || chr(10)
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody(BlockDeclPart(Procedure(BlockCode(SimpleStatement))))', l_ast.toString);
+    END;
+    
 
 END;
 /
