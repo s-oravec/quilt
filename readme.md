@@ -169,9 +169,15 @@ $ grunt test
 * 0.2.0
     * [ ] fix issues caused by flawed `DBMS_PROFILER` report
         * [x] implement PL/SQL Lexer
-        * [ ] implement PL/SQL "simple" parser - AST only for functions/procedures, branches, statements
+        * [in progress] implement PL/SQL "simple" parser - AST only for functions/procedures, branches, statements
         * [ ] implement Object Type representation of profile
         * [ ] generate LCOV report from Object Type representation
+* 0.3.0
+    * [ ] console reporter
+        * [ ] total summary
+        * [ ] package summary
+        * [ ] text version of LCOV HTML report
+        * [ ] with sqlCL colors
 
 # Credits
 
