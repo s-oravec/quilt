@@ -4,14 +4,21 @@ CREATE OR REPLACE PACKAGE plparse_parser AS
     SUBTYPE AstSymbolType IS VARCHAR2(30);
 
     -- AST Symbols    
-    ast_PackageBody     CONSTANT AstSymbolType := 'PackageBody';
-    ast_Procedure       CONSTANT AstSymbolType := 'Procedure';
-    ast_Function        CONSTANT AstSymbolType := 'Function';
     ast_Block           CONSTANT AstSymbolType := 'Block';
-    ast_InnerBlock      CONSTANT AstSymbolType := 'InnerBlock';
-    ast_BlockDeclPart   CONSTANT AstSymbolType := 'BlockDeclPart';
     ast_BlockCode       CONSTANT AstSymbolType := 'BlockCode';
+    ast_BlockDeclPart   CONSTANT AstSymbolType := 'BlockDeclPart';
+    ast_Branch          CONSTANT AstSymbolType := 'Branch';
+    ast_ConstantDecl    CONSTANT AstSymbolType := 'ConstantDecl';
+    ast_Decision        CONSTANT AstSymbolType := 'Decision';
+    ast_ExceptionBlock  CONSTANT AstSymbolType := 'ExceptionBlock';
+    ast_FunctionDef     CONSTANT AstSymbolType := 'FunctionDef';
+    ast_FunctionDecl    CONSTANT AstSymbolType := 'FunctionDecl';
+    ast_InnerBlock      CONSTANT AstSymbolType := 'InnerBlock';
     ast_OtherDecl       CONSTANT AstSymbolType := 'OtherDecl';
+    ast_ExecutableDecl  CONSTANT AstSymbolType := 'ExecutableDecl';
+    ast_PackageBody     CONSTANT AstSymbolType := 'PackageBody';
+    ast_ProcedureDef    CONSTANT AstSymbolType := 'ProcedureDef';
+    ast_ProcedureDecl   CONSTANT AstSymbolType := 'ProcedureDecl';
     ast_SimpleStatement CONSTANT AstSymbolType := 'SimpleStatement';
 
     -- initializes parser with object source

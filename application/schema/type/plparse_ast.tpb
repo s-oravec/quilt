@@ -101,9 +101,9 @@ CREATE OR REPLACE Type BODY plparse_ast AS
             FOR idx IN 1 .. self.children.count LOOP
                 l_child := plparse_ast_registry.get_by_id(self.children(idx));
                 IF idx = 1 THEN
-                    l_Result := l_Result || l_child.toString(lvl + 1);
+                    l_Result := l_Result || l_child.toString(lvl + 1, verbosity);
                 ELSE
-                    l_Result := l_Result || ',' || l_child.toString(lvl + 1);
+                    l_Result := l_Result || ',' || l_child.toString(lvl + 1, verbosity);
                 END IF;
             END LOOP;
             RETURN strMe || '(' || l_Result || strAfterChildren || ')';

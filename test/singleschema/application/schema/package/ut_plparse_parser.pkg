@@ -4,8 +4,19 @@ CREATE OR REPLACE PACKAGE ut_plparse_parser AS
 
     PROCEDURE pkgBodyEmpty(D VARCHAR2 := 'Empty package body works');
     PROCEDURE pkgBodyCursor(D VARCHAR2 := 'Package body with cursor declaration works');
-    PROCEDURE pkgBodyProcWOParams(D VARCHAR2 := 'Package body with procedure without params works');
-    PROCEDURE pkgBodyProcWParams(D VARCHAR2 := 'Package body with procedure with params works');
+    PROCEDURE pkgBodyProcWOParams(D VARCHAR2 := 'Package body with procedure definition without params works');
+    PROCEDURE pkgBodyProcWParams(D VARCHAR2 := 'Package body with procedure definition with params works');
+    PROCEDURE pkgBodyProcDecl(D VARCHAR2 := 'Package body with procedure declaration and definition');
+
+    PROCEDURE parseSamplePackageBody(D VARCHAR2 := 'Parses sample package');
+
+    PROCEDURE functionDef1(D VARCHAR2 := 'Function def without params');
+    PROCEDURE functionDef2(D VARCHAR2 := 'Function def with params');
+
+    PROCEDURE parseIfSample(D VARCHAR2 := 'Parses procedure with sample if statements');
+    PROCEDURE parseDeclWithoutInitSample(D VARCHAR2 := 'Parses sample declarations without initialization');
+    PROCEDURE parseDeclWithInitSample(D VARCHAR2 := 'Parses sample declarations with initialization');
+
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
@@ -44,7 +55,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         l_ast := plparse_parser.parse;
         pete_assert.eq('PackageBody(BlockDeclPart(OtherDecl))', l_ast.toString);
     END;
-    
+
     ---------------------------------------------------------------------------- 
     PROCEDURE pkgBodyProcWOParams(D VARCHAR2) IS
         -- NoFormat Start
@@ -60,7 +71,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         pete.set_method_description(D);
         plparse_parser.initialize(l_sourceLines);
         l_ast := plparse_parser.parse;
-        pete_assert.eq('PackageBody(BlockDeclPart(Procedure(BlockCode(SimpleStatement))))', l_ast.toString);
+        pete_assert.eq('PackageBody(BlockDeclPart(ProcedureDef(BlockCode(SimpleStatement))))', l_ast.toString);
     END;
 
     ---------------------------------------------------------------------------- 
@@ -87,9 +98,110 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         pete.set_method_description(D);
         plparse_parser.initialize(l_sourceLines);
         l_ast := plparse_parser.parse;
-        pete_assert.eq('PackageBody(BlockDeclPart(Procedure(BlockCode(SimpleStatement))))', l_ast.toString);
+        pete_assert.eq('PackageBody(BlockDeclPart(ProcedureDef(BlockCode(SimpleStatement))))', l_ast.toString);
     END;
-    
+
+    ---------------------------------------------------------------------------- 
+    PROCEDURE pkgBodyProcDecl(D VARCHAR2) IS
+        -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'package body pkgBodyProcWOParams as' || chr(10), 
+            '  procedure tradaa2;' || chr(10),
+            '  procedure tradaa1 is' || chr(10),
+            '  begin tradaa2; end;' || chr(10),            
+            '  procedure tradaa2 is' || chr(10),
+            '  begin null; end;' || chr(10),
+            'end;' || chr(10)
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody(BlockDeclPart(ProcedureDecl,ProcedureDef(BlockCode),ProcedureDef(BlockCode(SimpleStatement))))',
+                       l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE parseSamplePackageBody(D VARCHAR2) IS
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(USER, 'FIX_PARSER_FNCANDPROC', 'PACKAGE BODY');
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('PackageBody(BlockDeclPart(ProcedureDef(BlockCode(SimpleStatement)),ProcedureDef(BlockCode(SimpleStatement)),FunctionDef(BlockCode(SimpleStatement)),FunctionDef(BlockCode(SimpleStatement)),ProcedureDef(BlockDeclPart(ProcedureDef(BlockCode(SimpleStatement))),BlockCode)))',
+                       l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE functionDef1(D VARCHAR2) IS
+         -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'FUNCTION fncWithoutParams RETURN PLS_INTEGER IS' || chr(10),
+            'BEGIN' || chr(10),
+            '    RETURN NULL;' || chr(10),
+            'END fncWithoutParams;'
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('FunctionDef(BlockCode(SimpleStatement))', l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE functionDef2(D VARCHAR2) IS
+         -- NoFormat Start
+        l_sourceLines plex_lexer.typ_source_text := plex_lexer.typ_source_text(
+            'FUNCTION fncWithoutParams (p integer) RETURN PLS_INTEGER IS' || chr(10),
+            'BEGIN' || chr(10),
+            '    RETURN NULL;' || chr(10),
+            'END fncWithoutParams;'
+        );
+        -- NoFormat End
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(l_sourceLines);
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('FunctionDef(BlockCode(SimpleStatement))', l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE parseIfSample(D VARCHAR2) IS
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(USER, 'FIX_PARSER_IF', 'PROCEDURE');
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('ProcedureDef(BlockCode(Decision(Branch(SimpleStatement)),Decision(Branch(SimpleStatement,SimpleStatement)),Decision(Branch(SimpleStatement),Branch(SimpleStatement)),Decision(Branch(SimpleStatement),Branch(SimpleStatement),Branch(SimpleStatement))))',
+                       l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE parseDeclWithoutInitSample(D VARCHAR2) IS
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(USER, 'FIX_PARSER_DECL_WITHOUT_INIT', 'PROCEDURE');
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('ProcedureDef(BlockDeclPart(OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl,OtherDecl),BlockCode(SimpleStatement))',
+                       l_ast.toString);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE parseDeclWithInitSample(D VARCHAR2) IS
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(USER, 'FIX_PARSER_DECL_WITH_INIT', 'PROCEDURE');
+        l_ast := plparse_parser.parse;
+        pete_assert.eq('ProcedureDef(BlockDeclPart(ExecutableDecl,ExecutableDecl,ExecutableDecl,ExecutableDecl),BlockCode(SimpleStatement))',
+                       l_ast.toString);
+    END;
 
 END;
 /

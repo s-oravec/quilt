@@ -1,44 +1,44 @@
 prompt .. Creating fixture function
-create function fix_util_optimizelevel_f return pls_integer as
-begin
-  return 0;
-end;
+CREATE OR REPLACE FUNCTION fix_util_optimizelevel_f RETURN PLS_INTEGER AS
+BEGIN
+    RETURN 0;
+END;
 /
 
 prompt .. Creating fixture procedure
-create procedure fix_util_optimizelevel_p as
-begin
-  null;
-end;
+CREATE OR REPLACE PROCEDURE fix_util_optimizelevel_p AS
+BEGIN
+    NULL;
+END;
 /
 
 prompt .. Creating fixture package
-create package fix_util_optimizelevel_pkg as
+CREATE OR REPLACE PACKAGE fix_util_optimizelevel_pkg AS
 
-  procedure dummy;
+    PROCEDURE dummy;
 
-end;
+END;
 /
 
 prompt .. Creating fixture package
-create package body fix_util_optimizelevel_pkg as
+CREATE OR REPLACE PACKAGE BODY fix_util_optimizelevel_pkg AS
 
-  procedure dummy is
-  begin
-    null;
-  end;
+    PROCEDURE dummy IS
+    BEGIN
+        NULL;
+    END;
 
-end;
+END;
 /
 
 prompt .. Creating fixture table
 create table fix_util_optimizelevel_tab as select 1 n from dual;
 
 prompt .. Creating fixture trigger
-create trigger fix_util_optimizelevel_trg
-  before insert on fix_util_optimizelevel_tab
-  for each row
-begin
-  null;
-end;
+CREATE OR REPLACE TRIGGER fix_util_optimizelevel_trg
+    BEFORE INSERT ON fix_util_optimizelevel_tab
+    FOR EACH ROW
+BEGIN
+    NULL;
+END;
 /

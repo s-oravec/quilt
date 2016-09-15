@@ -1,5 +1,8 @@
 CREATE OR REPLACE Type plparse_ast_block UNDER plparse_AST
 (
+    -- named - procedure/function definition, package procedure/function definition
+    -- or anonymous block - inner
+    
     Name VARCHAR2(4000),
 
     CONSTRUCTOR FUNCTION plparse_ast_block

@@ -6,7 +6,10 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     SUBTYPE TokenType IS VARCHAR2(30);
 
     -- special characters
+    
     tk_Asterix         CONSTANT TokenType := '*';
+    -- has to be before Colon!!!
+    tk_Assign          CONSTANT TokenType := ':=';
     tk_Colon           CONSTANT TokenType := ':';
     tk_Comma           CONSTANT TokenType := ',';
     tk_Dollar          CONSTANT TokenType := '$';
@@ -117,9 +120,12 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     -- reserved words
     rw_BODY     CONSTANT TokenType := 'BODY';
     rw_CLOSE    CONSTANT TokenType := 'CLOSE';
+    rw_CONSTANT CONSTANT TokenType := 'CONSTANT';
     rw_CONTINUE CONSTANT TokenType := 'CONTINUE';
+    rw_ELSIF    CONSTANT TokenType := 'ELSIF';
     rw_EXECUTE  CONSTANT TokenType := 'EXECUTE';
     rw_EXIT     CONSTANT TokenType := 'EXIT';
+    rw_LOOP     CONSTANT TokenType := 'LOOP';
     rw_FORALL   CONSTANT TokenType := 'FORALL';
     rw_MERGE    CONSTANT TokenType := 'MERGE';
     rw_OPEN     CONSTANT TokenType := 'OPEN';
@@ -127,6 +133,7 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     rw_PIPE     CONSTANT TokenType := 'PIPE';
     rw_PRAGMA   CONSTANT TokenType := 'PRAGMA';
     rw_RAISE    CONSTANT TokenType := 'RAISE';
+    rw_WHILE    CONSTANT TokenType := 'WHILE';
     rw_RETURN   CONSTANT TokenType := 'RETURN';
 
     -- special tokens
@@ -137,6 +144,7 @@ CREATE OR REPLACE PACKAGE plex_lexer AS
     tk_SingleLineComment CONSTANT TokenType := '<SingleLineComment>';
     tk_MultiLineComment  CONSTANT TokenType := '<MultiLineComment>';
     tk_Word              CONSTANT TokenType := '<Word>';
+    tk_Label             CONSTANT TokenType := '<Label>';
 
     ----------------------------------------------------------------------------  
     -- Exposed LexemeTokenizer methods

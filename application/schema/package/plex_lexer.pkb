@@ -49,6 +49,9 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         -- single line comment
         appendMatcher(NEW plex_matchMultiLineComment());
         --
+        -- add matcher for matching labels
+        appendMatcher(new plex_matchLabel());
+        --
         -- add special characters matchers    
         FOR idx IN 1 .. g_specialCharacterTokens.count LOOP
             appendMatcher(NEW plex_matchKeyword(g_specialCharacterTokens(idx), g_specialCharacterTokens(idx)));
@@ -69,7 +72,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         appendMatcher(NEW plex_matchNumberLiteral());
         --
         -- add matcher for matching words
-        appendMatcher(NEW plex_matchWord());
+        appendMatcher(NEW plex_matchWord());        
     END;
 
     ----------------------------------------------------------------------------
@@ -269,6 +272,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
 BEGIN
     g_specialCharacterTokens := typ_tableOfTokens(tk_Dot,
                                                   tk_Comma,
+                                                  tk_Assign, -- has to be before Colon!!!
                                                   tk_Colon,
                                                   tk_Semicolon,
                                                   tk_Plus,

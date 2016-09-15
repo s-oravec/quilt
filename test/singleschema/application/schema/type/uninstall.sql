@@ -4,6 +4,9 @@ drop package ut_quilt_integer_stack;
 prompt .. Dropping package UT_PLEX_MATCHTEXTLITERAL
 drop package ut_plex_matchtextliteral;
 
+prompt .. Dropping package UT_PLEX_MATCHLABEL
+drop package ut_plex_matchlabel;
+
 prompt .. Dropping package UT_PLEX_MATCHKEYWORD
 drop package ut_plex_matchkeyword;
 

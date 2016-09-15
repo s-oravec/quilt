@@ -4,6 +4,9 @@ prompt .. Creating package UT_QUILT_INTEGER_STACK
 prompt .. Creating package UT_PLEX_MATCHTEXTLITERAL
 @@ut_plex_matchtextliteral.pkg
 
+prompt .. Creating package UT_PLEX_MATCHLABEL
+@@ut_plex_matchlabel.pkg
+
 prompt .. Creating package UT_PLEX_MATCHKEYWORD
 @@ut_plex_matchkeyword.pkg
 
