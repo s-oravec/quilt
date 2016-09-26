@@ -2,14 +2,14 @@ CREATE OR REPLACE PACKAGE ut_plex_matchLabel AS
 
     Description CONSTANT pete_types.typ_description := 'plex_matchLabel';
 
-    PROCEDURE oomatchLabel(D VARCHAR2 := 'match label');
+    PROCEDURE matchLabel(D VARCHAR2 := 'match label');
 
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plex_matchLabel AS
 
     ----------------------------------------------------------------------------
-    PROCEDURE oomatchLabel(D VARCHAR2) IS
+    PROCEDURE matchLabel(D VARCHAR2) IS
         l_Text         VARCHAR2(30) := 'label';
         l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text('<<' || l_Text || '>>');
         l_match        plex_matchLabel := plex_matchLabel();

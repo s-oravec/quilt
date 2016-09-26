@@ -50,7 +50,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         appendMatcher(NEW plex_matchMultiLineComment());
         --
         -- add matcher for matching labels
-        appendMatcher(new plex_matchLabel());
+        appendMatcher(NEW plex_matchLabel());
         --
         -- add special characters matchers    
         FOR idx IN 1 .. g_specialCharacterTokens.count LOOP
@@ -72,7 +72,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         appendMatcher(NEW plex_matchNumberLiteral());
         --
         -- add matcher for matching words
-        appendMatcher(NEW plex_matchWord());        
+        appendMatcher(NEW plex_matchWord());
     END;
 
     ----------------------------------------------------------------------------
@@ -198,16 +198,15 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
     ----------------------------------------------------------------------------
     FUNCTION isSpecialCharacter(p_character IN VARCHAR2) RETURN BOOLEAN IS
     BEGIN
-        -- TODO: fix this
         RETURN p_character IN(tk_Asterix,
                               tk_Colon,
                               tk_Comma,
-                              tk_Dollar,
+                              -- tk_Dollar, - not special as it can be part of variableName
                               tk_Dot,
                               tk_Equals,
                               tk_ExclamationMark,
                               tk_GreaterThan,
-                              tk_Hash,
+                              -- tk_Hash, - not special as it can be part of variableName
                               tk_LessThan,
                               tk_LParenth,
                               tk_Minus,
@@ -217,8 +216,9 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
                               tk_Quote,
                               tk_RParenth,
                               tk_Semicolon,
-                              tk_Slash,
-                              tk_Underscore);
+                              tk_Slash
+                              --, tk_Underscore  - not special as it can be part of variableName
+                              );
     END;
 
     ----------------------------------------------------------------------------
@@ -243,7 +243,7 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
         l_Result := nextTokenImpl();
         WHILE l_Result IS NOT NULL AND l_result.tokenType != tk_EOF LOOP
             -- TODO: make this strip of whitespace/comments optional using parameter
-            IF l_result.tokenType not in (tk_WhiteSpace, tk_SingleLineComment, tk_MultilineComment) THEN
+            IF l_result.tokenType NOT IN (tk_WhiteSpace, tk_SingleLineComment, tk_MultilineComment) THEN
                 RETURN l_Result;
             END IF;
             l_Result := nextTokenImpl;
@@ -270,27 +270,28 @@ CREATE OR REPLACE PACKAGE BODY plex_lexer AS
     END;
 
 BEGIN
-    g_specialCharacterTokens := typ_tableOfTokens(tk_Dot,
-                                                  tk_Comma,
-                                                  tk_Assign, -- has to be before Colon!!!
-                                                  tk_Colon,
-                                                  tk_Semicolon,
-                                                  tk_Plus,
-                                                  tk_Minus,
+    g_specialCharacterTokens := typ_tableOfTokens(tk_Assign, -- has to be before Colon!!!
                                                   tk_Asterix,
-                                                  tk_Slash,
-                                                  tk_Hash,
-                                                  tk_Underscore,
-                                                  tk_Dollar,
-                                                  tk_Pipe,
-                                                  tk_Percent,
-                                                  tk_Quote,
-                                                  tk_ExclamationMark,
+                                                  tk_Colon,
+                                                  tk_Comma,
+                                                  -- tk_Dollar,
+                                                  tk_Dot,
                                                   tk_Equals,
+                                                  tk_ExclamationMark,
                                                   tk_GreaterThan,
+                                                  -- tk_Hash,
                                                   tk_LessThan,
                                                   tk_LParenth,
-                                                  tk_RParenth);
+                                                  tk_Minus,
+                                                  tk_Percent,
+                                                  tk_Pipe,
+                                                  tk_Plus,
+                                                  tk_Quote,
+                                                  tk_RParenth,
+                                                  tk_Semicolon,
+                                                  tk_Slash
+                                                  -- , tk_Underscore
+                                                  );
 
     g_keywordTokens := typ_tableOfTokens(kw_ALL,
                                          kw_ALTER,

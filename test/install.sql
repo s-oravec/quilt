@@ -10,7 +10,7 @@ set termout on
 
 @&&run_dir &&g_test_target
 
-prompt Grant execute on UT% packages to Pete
+prompt Grant execute on UT% packages to Pete schema &&g_pete_schema
 define g_pete_schema = PETE_010000
 BEGIN
     FOR ii IN (SELECT *

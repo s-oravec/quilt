@@ -13,9 +13,10 @@ CREATE OR REPLACE PACKAGE ut_plparse_parser AS
     PROCEDURE functionDef1(D VARCHAR2 := 'Function def without params');
     PROCEDURE functionDef2(D VARCHAR2 := 'Function def with params');
 
-    PROCEDURE parseIfSample(D VARCHAR2 := 'Parses procedure with sample if statements');
+    PROCEDURE parseIfSample(D VARCHAR2 := 'Parses procedure with sample IF statements');    
     PROCEDURE parseDeclWithoutInitSample(D VARCHAR2 := 'Parses sample declarations without initialization');
     PROCEDURE parseDeclWithInitSample(D VARCHAR2 := 'Parses sample declarations with initialization');
+    PROCEDURE parseCaseSample(D varchar2 := 'Parses producedure with sample CASE statements');
 
 END;
 /
@@ -202,6 +203,18 @@ CREATE OR REPLACE PACKAGE BODY ut_plparse_parser AS
         pete_assert.eq('ProcedureDef(BlockDeclPart(ExecutableDecl,ExecutableDecl,ExecutableDecl,ExecutableDecl),BlockCode(SimpleStatement))',
                        l_ast.toString);
     END;
-
+    
+    ----------------------------------------------------------------------------
+    PROCEDURE parseCaseSample(D VARCHAR2) IS
+        l_ast plparse_ast;
+    BEGIN
+        pete.set_method_description(D);
+        plparse_parser.initialize(USER, 'FIX_PARSER_CASE', 'PROCEDURE');
+        l_ast := plparse_parser.parse;
+        pete_assert.this(l_ast is not null);
+        pete_assert.eq('ProcedureDef(BlockDeclPart(OtherDecl),BlockCode(Decision(Branch(SimpleStatement)),Decision(Branch(SimpleStatement)),<Label>,Decision(Branch(SimpleStatement)),Decision(Branch(SimpleStatement),Branch(SimpleStatement)),Decision(Branch(SimpleStatement))))',
+                       l_ast.toString);
+    END;
+    
 END;
 /

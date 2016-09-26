@@ -335,7 +335,7 @@ CREATE OR REPLACE PACKAGE BODY plparse_parser AS
     BEGIN
         -- take block end
         plparse_token_stream.take(plex_lexer.kw_END);
-        --ok
+        -- ok
         IF endToken IS NOT NULL AND endToken.tokenType != plex_lexer.tk_Word THEN
             -- take keword
             plparse_token_stream.take(endToken.tokenType);
@@ -343,9 +343,10 @@ CREATE OR REPLACE PACKAGE BODY plparse_parser AS
             -- take reserved word
             plparse_token_stream.takeReservedWord(endToken.text);
         END IF;
-        -- consume optional name after end - not for IF, CASE
+        -- consume optional name after end - not for IF
         -- other "blocks" may be labeled/named
-        IF endToken IS NULL OR endToken.tokenType NOT IN (plex_lexer.kw_IF, plex_lexer.kw_CASE) THEN
+        -- !!! case can have label !!!
+        IF endToken IS NULL OR endToken.tokenType NOT IN (plex_lexer.kw_IF) THEN
             IF currentTokenType = plex_lexer.tk_Word THEN
                 plparse_token_stream.consume;
             END IF;

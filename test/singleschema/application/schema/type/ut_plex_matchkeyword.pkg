@@ -4,6 +4,7 @@ CREATE OR REPLACE PACKAGE ut_plex_matchKeyword AS
 
     PROCEDURE keywordPrefixNotIngored(D VARCHAR2 := 'if keyword matched even as substring if allowedAsSubstring (default)');
     PROCEDURE keywordPrefixIngored(D VARCHAR2 := 'if keyword not matched if not allowedAsSubstring');
+    PROCEDURE keywordPrefixIngored2(D VARCHAR2 := 'if keyword not matched if not allowedAsSubstring - _#$ are not special characters delimiting keywords');
     PROCEDURE keywordMatchIfDelimited(D VARCHAR2 := 'keyword is matched if delimited by space, special or eof');
 
 END;
@@ -34,6 +35,27 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
     ----------------------------------------------------------------------------
     PROCEDURE keywordPrefixIngored(D VARCHAR2) IS
         l_Text         VARCHAR2(30) := 'functionTest';
+        l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
+        l_match        plex_matchKeyword := plex_matchKeyword(plex_lexer.kw_FUNCTION, plex_lexer.kw_FUNCTION, 'N');
+        l_matchWord    plex_matchWord := plex_matchWord();
+        l_matchedToken plex_token;
+    BEGIN
+        pete.set_method_description(D);
+        plex_lexer.initialize(l_sourceLines);
+        --
+        l_matchedToken := l_match.isMatch;
+        -- function keyword is not matched as prefix
+        pete_assert.this(l_matchedToken IS NULL);
+        -- word functionTest is matched
+        l_matchedToken := l_matchWord.isMatch;
+        pete_assert.eq(plex_lexer.tk_Word, l_matchedToken.tokenType);
+        pete_assert.eq(l_Text, l_matchedToken.text);
+        pete_assert.this(plex_lexer.eof);
+    END;
+
+    ----------------------------------------------------------------------------
+    PROCEDURE keywordPrefixIngored2(D VARCHAR2) IS
+        l_Text         VARCHAR2(30) := 'function_Test';
         l_sourceLines  plex_lexer.typ_source_text := plex_lexer.typ_source_text(l_Text);
         l_match        plex_matchKeyword := plex_matchKeyword(plex_lexer.kw_FUNCTION, plex_lexer.kw_FUNCTION, 'N');
         l_matchWord    plex_matchWord := plex_matchWord();
